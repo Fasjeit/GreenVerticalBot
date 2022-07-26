@@ -18,3 +18,8 @@ https://dotnet.microsoft.com/en-us/download/dotnet/6.0
 ```cmd
 dotnet run
 ```
+
+### 3. Ждём сообщения вида
+```cmd
+ Start listening for @имя_бота
+```
