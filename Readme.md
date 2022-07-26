@@ -20,6 +20,6 @@ dotnet run
 ```
 
 ### 3. Ждём сообщения вида
-```cmd
+```
  Start listening for @имя_бота
 ```
