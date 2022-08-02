@@ -33,10 +33,10 @@ docker build -t bot_image -f Dockerfile .
 
 ### 2. Создание контейнера
 ```cmd
-docker create --name bot bot_image
+docker create --name bot --interactive bot_image
 ```
 
 ## 3. Запуск контейнера
 ```cmd
-docker run -i -d bot
+docker start bot
 ```
