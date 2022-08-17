@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace GvBot
+namespace GvBot.Configuration
 {
     /// <summary>
     /// Конфигурация бота
@@ -18,6 +18,11 @@ namespace GvBot
         /// </summary>
         public long PrivateChatId { get; set; }
 
+        /// <summary>
+        /// Строка подключения к бд
+        /// </summary>
+        public string MySqlConnectionString { get; set; }
+
         private AppConfig()
         {
         }
@@ -28,7 +33,9 @@ namespace GvBot
         /// <returns></returns>
         public static async Task<AppConfig> GetConfigAsync()
         {
-            return JsonConvert.DeserializeObject<AppConfig>(await File.ReadAllTextAsync(@"config.json"));
+            return JsonConvert.DeserializeObject<AppConfig>(
+                await File.ReadAllTextAsync(
+                    Path.Combine("Configuration", "config.json")));
         }
     }
 }

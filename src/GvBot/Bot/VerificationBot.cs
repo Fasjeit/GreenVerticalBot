@@ -1,25 +1,35 @@
-﻿using System.Text;
+﻿using GvBot.Configuration;
+using GvBot.EntityFramework.Store;
+using GvBot.Logs;
+using System.Text;
+using Telegram.Bot;
+using Telegram.Bot.Polling;
+using Telegram.Bot.Types.Enums;
 using System.Xml;
 using System.Xml.Linq;
 using Newtonsoft.Json;
-using Telegram.Bot;
 using Telegram.Bot.Exceptions;
-using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
 
 using GvBot.RestModels;
+using GvBot.EntityFramework.Entities;
 
-namespace GvBot
+namespace GvBot.Bot
 {
-    class Program
+    internal class VerificationBot
     {
-        /// <summary>
-        /// Клиент для общения с сервисом проверки подписи
-        /// </summary>
-        private static readonly HttpClient SvsCLient = new HttpClient();
+        private ITasksStore taskStore;
+        private HttpClient svsCLient;
 
-        static async Task Main(string[] args)
+        public VerificationBot(
+            ITasksStore taskStore,
+            IHttpClientFactory httpClientFactory)
+        {
+            this.taskStore = taskStore;
+            this.svsCLient = httpClientFactory.CreateClient();
+        }
+
+        public async Task MainRutine()
         {
             // Зачитываем конфиг бота
             var config = await AppConfig.GetConfigAsync();
@@ -159,7 +169,7 @@ namespace GvBot
 
                 // Выставляем тип содержимого и отправляем запрос
                 var content = new StringContent(serializedDoc, Encoding.UTF8, "application/json");
-                var result = await Program.SvsCLient.PostAsync($"https://dss.cryptopro.ru/Verify/rest/api/signatures", content);
+                var result = await this.svsCLient.PostAsync($"https://dss.cryptopro.ru/Verify/rest/api/signatures", content);
 
                 // Получаем ответ и разбираем результат
                 // Нас интересует 2 возможных ответа - либо проверка полностью прошла, либо проверка не прошла,
@@ -187,7 +197,7 @@ namespace GvBot
                     verificationResult = verificationResults[0];
                 }
 
-                
+
                 catch (Exception)
                 {
                     Message error = await botClient.SendTextMessageAsync(
@@ -247,6 +257,16 @@ namespace GvBot
                         config.PrivateChatId),
                     name: $"{update.Message.Chat.Username}_{DateTime.UtcNow.ToFileTimeUtc()}",
                     memberLimit: 1);
+
+                var data = new Data() { UserId = $"{chatId}:{update.Message.Chat.Username}", Invite = inviteLink.InviteLink };
+                
+                // Делаем запись в бд
+                await this.taskStore.AddTaskAsync(
+                    new TaskEntity() 
+                    { 
+                        Status = TaskEntity.StatusFormats.Approved, 
+                        Data = JsonConvert.SerializeObject(data) 
+                    });
 
                 TimedConsoleLogger.WriteLine($"user [{update.Message.Chat.Username}:{chatId}] : " +
                     $"new invite link generated [{inviteLink.Name} :: {inviteLink.InviteLink}]");
