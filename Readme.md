@@ -23,3 +23,20 @@ dotnet run
 ```
  Start listening for @имя_бота
 ```
+
+## Запуск в контейнере
+
+### 1. Сборка образа
+```cdm
+docker build -t bot_image -f Dockerfile .
+```
+
+### 2. Создание контейнера
+```cmd
+docker create --name bot --interactive bot_image
+```
+
+## 3. Запуск контейнера
+```cmd
+docker start bot
+```
