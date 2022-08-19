@@ -1,16 +1,16 @@
-﻿using GvBot.EntityFramework;
-using GvBot.EntityFramework.Store;
+﻿using GreenVerticalBot.EntityFramework;
+using GreenVerticalBot.EntityFramework.Store;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using Microsoft.EntityFrameworkCore;
-using GvBot.Bot;
-using GvBot.Configuration;
+using GreenVerticalBot.Bot;
+using GreenVerticalBot.Configuration;
 
-namespace GvBot
+namespace GreenVerticalBot
 {
-    internal class GvBotHost
+    internal class GreenVerticalBotHost
     {
         public static async Task RunHost()
         {
@@ -20,7 +20,7 @@ namespace GvBot
             builder.ConfigureServices(
                 (_, services) =>
             {
-                services.AddDbContext<GvBotContext>(
+                services.AddDbContext<GreenVerticalBotContext>(
                     (serviceProvider, options) =>
                 {
                     options.UseMySQL(config.MySqlConnectionString);

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace GvBot.Configuration
+namespace GreenVerticalBot.Configuration
 {
     /// <summary>
     /// Конфигурация бота

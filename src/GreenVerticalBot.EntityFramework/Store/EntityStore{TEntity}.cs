@@ -1,4 +1,4 @@
-﻿namespace GvBot.EntityFramework.Store
+﻿namespace GreenVerticalBot.EntityFramework.Store
 {
     using System.Collections.Generic;
     using System.Linq;
@@ -68,16 +68,16 @@
         /// blog.Rating = 5;
         /// context.SaveChanges();
         /// </remarks>
-        public virtual ValueTask<TEntity> GetByIdAsync(object id, bool noTracking = true)
+        public virtual ValueTask<TEntity?> GetByIdAsync(object id, bool noTracking = true)
         {
             if (noTracking)
             {
-                return new ValueTask<TEntity>(this.DbEntitySet.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id as string));
+                return new ValueTask<TEntity?>(this.DbEntitySet.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id as string));
             }
             return this.DbEntitySet.FindAsync(id);
         }
 
-        public virtual TEntity GetById(object id, bool noTracking = true)
+        public virtual TEntity? GetById(object id, bool noTracking = true)
         {
             if (noTracking)
             {

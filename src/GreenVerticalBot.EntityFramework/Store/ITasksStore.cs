@@ -1,10 +1,10 @@
-﻿using GvBot.EntityFramework.Entities;
+﻿using GreenVerticalBot.EntityFramework.Entities;
 
-namespace GvBot.EntityFramework.Store
+namespace GreenVerticalBot.EntityFramework.Store
 {
     public interface ITasksStore
     {
-        GvBotContext Context { get; }
+        GreenVerticalBotContext Context { get; }
 
         /// <summary>
         /// Добавить запись с информацией о документе

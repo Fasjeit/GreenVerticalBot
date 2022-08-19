@@ -1,6 +1,6 @@
-﻿using GvBot.Configuration;
-using GvBot.EntityFramework.Store;
-using GvBot.Logs;
+﻿using GreenVerticalBot.Configuration;
+using GreenVerticalBot.EntityFramework.Store;
+using GreenVerticalBot.Logs;
 using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
@@ -11,10 +11,10 @@ using Newtonsoft.Json;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
 
-using GvBot.RestModels;
-using GvBot.EntityFramework.Entities;
+using GreenVerticalBot.RestModels;
+using GreenVerticalBot.EntityFramework.Entities;
 
-namespace GvBot.Bot
+namespace GreenVerticalBot.Bot
 {
     internal class VerificationBot
     {
@@ -139,7 +139,7 @@ namespace GvBot.Bot
                        chatId: chatId,
                        text: $"Некооректный документ",
                        cancellationToken: cancellationToken);
-                    TimedConsoleLogger.WriteLine($"user [{update.Message.Chat.Username}:{chatId}] : invalid doc");
+                    TimedConsoleLogger.WriteLine($"user [{update.Message.Chat.Username}:{chatId}] : invalid doc, [{exception}]");
                     return;
                 }
 

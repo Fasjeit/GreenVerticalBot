@@ -1,4 +1,4 @@
-﻿namespace GvBot.EntityFramework.Store
+﻿namespace GreenVerticalBot.EntityFramework.Store
 {
     /// <summary>
     /// Базовый класс сущностей, содержащих ID

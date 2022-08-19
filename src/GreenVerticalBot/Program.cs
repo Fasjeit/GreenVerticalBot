@@ -8,11 +8,11 @@ using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
-using GvBot.RestModels;
-using GvBot.Logs;
-using GvBot.Configuration;
+using GreenVerticalBot.RestModels;
+using GreenVerticalBot.Logs;
+using GreenVerticalBot.Configuration;
 
-namespace GvBot
+namespace GreenVerticalBot
 {
     class Program
     {
@@ -23,7 +23,7 @@ namespace GvBot
 
         static async Task Main(string[] args)
         {
-            await GvBotHost.RunHost();
+            await GreenVerticalBotHost.RunHost();
             return;            
         }
     }

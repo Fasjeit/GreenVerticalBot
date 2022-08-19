@@ -1,4 +1,4 @@
-﻿namespace GvBot.Bot
+﻿namespace GreenVerticalBot.Bot
 {
     internal class Data
     {

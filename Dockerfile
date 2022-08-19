@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy everything
 COPY src ./
-WORKDIR /app/GvBot
+WORKDIR /app/GreenVerticalBot
 # Restore as distinct layers
 RUN dotnet restore
 # Build and publish a release
@@ -15,5 +15,5 @@ RUN dotnet publish -c Debug -o out
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/runtime:6.0
 WORKDIR /app
-COPY --from=build-env /app/GvBot/out .
-ENTRYPOINT ["dotnet","GvBot.dll"]
+COPY --from=build-env /app/GreenVerticalBot/out .
+ENTRYPOINT ["dotnet","GreenVerticalBot.dll"]

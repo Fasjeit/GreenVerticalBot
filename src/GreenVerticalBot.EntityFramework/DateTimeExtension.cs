@@ -1,4 +1,4 @@
-﻿namespace GvBot.EntityFramework
+﻿namespace GreenVerticalBot.EntityFramework
 {
     using System;
 

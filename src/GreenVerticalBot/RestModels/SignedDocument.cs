@@ -1,4 +1,4 @@
-namespace GvBot.RestModels
+namespace GreenVerticalBot.RestModels
 {
     /// <summary>
     /// Объект Подписанный документ.

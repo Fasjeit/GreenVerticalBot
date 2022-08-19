@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GvBot.RestModels
+namespace GreenVerticalBot.RestModels
 {
     /// <summary>
     /// Результат проверки подписи и/или сертификата для Rest

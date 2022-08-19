@@ -1,6 +1,6 @@
-﻿using GvBot.EntityFramework.Store;
+﻿using GreenVerticalBot.EntityFramework.Store;
 
-namespace GvBot.EntityFramework.Entities
+namespace GreenVerticalBot.EntityFramework.Entities
 {
     public class TaskEntity : IBaseEntity
     {

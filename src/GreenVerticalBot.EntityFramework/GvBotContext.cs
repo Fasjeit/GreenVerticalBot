@@ -1,10 +1,10 @@
-﻿namespace GvBot.EntityFramework
+﻿namespace GreenVerticalBot.EntityFramework
 {
     using System.Diagnostics.CodeAnalysis;
-    using GvBot.EntityFramework.Entities;
+    using GreenVerticalBot.EntityFramework.Entities;
     using Microsoft.EntityFrameworkCore;
 
-    public class GvBotContext :
+    public class GreenVerticalBotContext :
         DbContext
     {
         ///// <summary>
@@ -12,7 +12,7 @@
         ///// </summary>
         //public string ConnectionString { get => this.Database.GetConnectionString(); }
 
-        public GvBotContext([NotNull] DbContextOptions options)
+        public GreenVerticalBotContext([NotNull] DbContextOptions options)
             : base(options)
         {
         }
