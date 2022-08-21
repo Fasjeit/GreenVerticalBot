@@ -9,8 +9,9 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
 using GreenVerticalBot.RestModels;
-using GreenVerticalBot.Logs;
+using GreenVerticalBot.Logging;
 using GreenVerticalBot.Configuration;
+using Microsoft.Extensions.Configuration;
 
 namespace GreenVerticalBot
 {
@@ -23,6 +24,12 @@ namespace GreenVerticalBot
 
         static async Task Main(string[] args)
         {
+            //IConfiguration config = new ConfigurationBuilder()
+            //    .AddJsonFile("config.json")
+            //    .AddEnvironmentVariables()
+            //    .Build();
+
+
             await GreenVerticalBotHost.RunHost();
             return;            
         }

@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\Dockerfile" Link="Dockerfile" />
-    <None Include="..\..\Readme.md" Link="Readme.md" />
-    <None Include="..\.editorconfig" Link=".editorconfig" />
+    <Compile Remove="out\**" />
+    <EmbeddedResource Remove="out\**" />
+    <None Remove="out\**" />
   </ItemGroup>
 
   <ItemGroup>

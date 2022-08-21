@@ -10,6 +10,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{79FF08DA-BCEF-40C3-A09C-0AAE7FF0AFC0}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		..\Dockerfile = ..\Dockerfile
+		..\Readme.md = ..\Readme.md
+		..\RebuildAndRun.ps1 = ..\RebuildAndRun.ps1
+		..\SaveImageToFile.ps1 = ..\SaveImageToFile.ps1
 	EndProjectSection
 EndProject
 Global

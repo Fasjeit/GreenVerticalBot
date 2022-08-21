@@ -11,8 +11,6 @@
 
     public class TasksStore : ITasksStore
     {
-        protected const int LastAccessTimeDeltaSeconds = 60 * 60 * 24;
-
         public GreenVerticalBotContext Context { get; }
 
         private readonly EntityStore<TaskEntity> tasksStore;

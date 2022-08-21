@@ -1,6 +1,6 @@
 ﻿using GreenVerticalBot.Configuration;
 using GreenVerticalBot.EntityFramework.Store;
-using GreenVerticalBot.Logs;
+using GreenVerticalBot.Logging;
 using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
@@ -16,12 +16,12 @@ using GreenVerticalBot.EntityFramework.Entities;
 
 namespace GreenVerticalBot.Bot
 {
-    internal class VerificationBot
+    internal partial class _VerificationBot
     {
         private ITasksStore taskStore;
         private HttpClient svsCLient;
 
-        public VerificationBot(
+        public _VerificationBot(
             ITasksStore taskStore,
             IHttpClientFactory httpClientFactory)
         {

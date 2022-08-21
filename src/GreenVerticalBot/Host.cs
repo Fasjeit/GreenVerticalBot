@@ -7,6 +7,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.EntityFrameworkCore;
 using GreenVerticalBot.Bot;
 using GreenVerticalBot.Configuration;
+using Telegram.Bot;
+using Telegram.Bot.Polling;
+using Telegram.Bot.Types.Enums;
+using GreenVerticalBot.Dialogs;
 
 namespace GreenVerticalBot
 {
@@ -26,8 +30,13 @@ namespace GreenVerticalBot
                     options.UseMySQL(config.MySqlConnectionString);
                 });
                 services.AddScoped<ITasksStore, TasksStore>();
-                services.AddScoped<VerificationBot>();
+                services.AddScoped<GreenBot>();
                 services.AddHttpClient();
+
+                services.AddSingleton<AppConfig>(config);
+                services.AddSingleton<DialogOrcestrator>();
+
+                services.AddScoped<WellcomeDialog>();
             });
 
             using (var host = builder.Build())
@@ -52,7 +61,8 @@ namespace GreenVerticalBot
             //logger.LogOperations($"{scope}-Call 2 .GetRequiredService<OperationLogger>()");
 
             //Console.WriteLine();
-            var bot = provider.GetRequiredService<VerificationBot>();
+
+            var bot = provider.GetRequiredService<GreenBot>();
             await bot.MainRutine();
         }
     }
