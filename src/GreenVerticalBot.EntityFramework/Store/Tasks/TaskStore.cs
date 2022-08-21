@@ -1,21 +1,14 @@
-﻿namespace GreenVerticalBot.EntityFramework.Store
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Data;
-    using System.Data.SqlClient;
-    using System.Linq;
-    using System.Threading.Tasks;
-    using GreenVerticalBot.EntityFramework.Entities;
-    using Microsoft.EntityFrameworkCore;
+﻿using GreenVerticalBot.EntityFramework.Entities;
 
-    public class TasksStore : ITasksStore
+namespace GreenVerticalBot.EntityFramework.Store.Tasks
+{
+    public class TaskStore : ITaskStore
     {
         public GreenVerticalBotContext Context { get; }
 
         private readonly EntityStore<TaskEntity> tasksStore;
 
-        public TasksStore(GreenVerticalBotContext dbContext)
+        public TaskStore(GreenVerticalBotContext dbContext)
         {
             this.Context = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
             this.tasksStore = new EntityStore<TaskEntity>(dbContext);

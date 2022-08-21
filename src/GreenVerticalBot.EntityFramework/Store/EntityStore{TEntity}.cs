@@ -102,6 +102,7 @@
         public void Delete(TEntity entity)
         {
             this.DbEntitySet.Remove(entity);
+            this.Context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -114,6 +115,7 @@
             if (existedEntity != null)
             {
                 this.DbEntitySet.Remove(existedEntity);
+                this.Context.SaveChangesAsync();
             }
         }
 
@@ -127,12 +129,14 @@
             if (existedEntity != null)
             {
                 this.DbEntitySet.Remove(existedEntity);
+                this.Context.SaveChangesAsync();
             }
         }
 
         public void Delete(IEnumerable<TEntity> entities)
         {
             this.DbEntitySet.RemoveRange(entities);
+            this.Context.SaveChangesAsync();
         }
 
         /// <summary>
@@ -151,6 +155,7 @@
             {
                 this.Context.Entry(existedEntity).CurrentValues.SetValues(entity);
             }
+            this.Context.SaveChangesAsync();
         }
     }
 }

@@ -9,9 +9,10 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
 using GreenVerticalBot.RestModels;
-using GreenVerticalBot.Logging;
 using GreenVerticalBot.Configuration;
 using Microsoft.Extensions.Configuration;
+using Serilog.Events;
+using Serilog;
 
 namespace GreenVerticalBot
 {
@@ -24,14 +25,17 @@ namespace GreenVerticalBot
 
         static async Task Main(string[] args)
         {
-            //IConfiguration config = new ConfigurationBuilder()
-            //    .AddJsonFile("config.json")
-            //    .AddEnvironmentVariables()
-            //    .Build();
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Verbose()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                .Enrich.FromLogContext()
+                .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{SourceContext}] [{Level}] {Message}{NewLine}{Exception}")
+                .CreateLogger();
+
 
 
             await GreenVerticalBotHost.RunHost();
-            return;            
+            return;
         }
     }
 }

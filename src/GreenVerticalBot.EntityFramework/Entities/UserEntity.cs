@@ -9,7 +9,9 @@ namespace GreenVerticalBot.EntityFramework.Entities
         }
 
         public string Id { get; set; } = Guid.NewGuid().ToString();
+        public long TelegramId { get; set; } = 0;
         public long CreationTime { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        public long LastAccessTime { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         public string Role { get; set; } = UserEntity.UserRols.UnauthorizedUser;
         public string Building { get; set; } = UserEntity.BuildingId.None;
         public string Data { get; set; } = "{}";
@@ -17,6 +19,7 @@ namespace GreenVerticalBot.EntityFramework.Entities
 
         public static class StatusFormats
         {
+            public const string New = "new";
             public const string Active = "active";
             public const string Blocked = "blocked";
         }
@@ -33,6 +36,10 @@ namespace GreenVerticalBot.EntityFramework.Entities
         public static class BuildingId
         {
             public const string None = "none";
+
+            /// <summary>
+            /// 10 строительный, 9 по адресу
+            /// </summary>
             public const string B10_9 = "b10_9";
 
         }

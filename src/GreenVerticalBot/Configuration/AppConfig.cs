@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace GreenVerticalBot.Configuration
 {
@@ -23,7 +25,7 @@ namespace GreenVerticalBot.Configuration
         /// </summary>
         public string MySqlConnectionString { get; set; }
 
-        private AppConfig()
+        public AppConfig()
         {
         }
 
@@ -33,6 +35,12 @@ namespace GreenVerticalBot.Configuration
         /// <returns></returns>
         public static async Task<AppConfig> GetConfigAsync()
         {
+            //var options = new JsonSerializerOptions()
+            //{
+            //    NumberHandling = JsonNumberHandling.AllowReadingFromString |
+            //    JsonNumberHandling.WriteAsString
+            //};
+
             return JsonConvert.DeserializeObject<AppConfig>(
                 await File.ReadAllTextAsync(
                     Path.Combine("Configuration", "config.json")));

@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GreenVerticalBot.EntityFramework.Store
+namespace GreenVerticalBot.EntityFramework.Store.Tasks
 {
-    internal class StubTaskStore : ITasksStore
+    internal class StubTaskStore : ITaskStore
     {
         public GreenVerticalBotContext Context => throw new NotImplementedException();
 

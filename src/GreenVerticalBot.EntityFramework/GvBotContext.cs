@@ -24,6 +24,10 @@
             modelBuilder.Entity<TaskEntity>()
                 .ToTable("Tasks")
                 .HasKey(e => e.Id);
+
+            modelBuilder.Entity<UserEntity>()
+                .ToTable("Users")
+                .HasKey(e => e.Id);
         }
     }
 }

@@ -1,13 +1,13 @@
 ﻿using GreenVerticalBot.EntityFramework.Entities;
 
-namespace GreenVerticalBot.EntityFramework.Store
+namespace GreenVerticalBot.EntityFramework.Store.Tasks
 {
-    public interface ITasksStore
+    public interface ITaskStore
     {
         GreenVerticalBotContext Context { get; }
 
         /// <summary>
-        /// Добавить запись с информацией о документе
+        /// Добавить запись с информацией о задаче
         /// </summary>
         /// <param name="entity">
         /// Сущность для записи в БД

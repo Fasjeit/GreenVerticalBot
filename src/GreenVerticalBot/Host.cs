@@ -1,5 +1,4 @@
 ﻿using GreenVerticalBot.EntityFramework;
-using GreenVerticalBot.EntityFramework.Store;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -11,6 +10,10 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types.Enums;
 using GreenVerticalBot.Dialogs;
+using GreenVerticalBot.EntityFramework.Store.Tasks;
+using GreenVerticalBot.Users;
+using GreenVerticalBot.EntityFramework.Store.User;
+using Serilog;
 
 namespace GreenVerticalBot
 {
@@ -18,7 +21,9 @@ namespace GreenVerticalBot
     {
         public static async Task RunHost()
         {
-            var builder = Host.CreateDefaultBuilder();
+            var builder = Host.CreateDefaultBuilder()
+                .UseSerilog();
+
             var config = await AppConfig.GetConfigAsync();
 
             builder.ConfigureServices(
@@ -29,7 +34,10 @@ namespace GreenVerticalBot
                 {
                     options.UseMySQL(config.MySqlConnectionString);
                 });
-                services.AddScoped<ITasksStore, TasksStore>();
+
+                services.AddScoped<ITaskStore, TaskStore>();
+                services.AddScoped<IUserStore, UserStore>();
+
                 services.AddScoped<GreenBot>();
                 services.AddHttpClient();
 
@@ -37,6 +45,11 @@ namespace GreenVerticalBot
                 services.AddSingleton<DialogOrcestrator>();
 
                 services.AddScoped<WellcomeDialog>();
+                services.AddScoped<RegisterDialog>();
+                services.AddScoped<UserInfoDialog>();
+                services.AddScoped<AuthorizeDialog>();
+
+                services.AddScoped<IUserManager, UserManager>();
             });
 
             using (var host = builder.Build())
