@@ -10,9 +10,9 @@ namespace GreenVerticalBot.Dialogs
     {
         public WellcomeDialog(
             DialogOrcestrator dialogOrcestrator,
-            AppConfig config,
+            BotConfiguration config,
             IUserManager userManager,
-            DialogData data,
+            DialogContext data,
             ILogger<WellcomeDialog> logger)
             : base(dialogOrcestrator, config, userManager, data, logger)
         {

@@ -5,7 +5,7 @@ using User = GreenVerticalBot.Users.User;
 
 namespace GreenVerticalBot.Dialogs
 {
-    internal class DialogData
+    internal class DialogContext
     {
         public ITelegramBotClient BotClient { get; set; }
         public Update Update { get; set; }

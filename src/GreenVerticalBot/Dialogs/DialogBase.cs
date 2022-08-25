@@ -18,7 +18,7 @@ namespace GreenVerticalBot.Dialogs
         /// <summary>
         /// Конфигурация бота
         /// </summary>
-        protected AppConfig Config { get; set; }
+        protected BotConfiguration Config { get; set; }
 
         protected ILogger<DialogBase> Logger { get; set; }
 
@@ -32,7 +32,7 @@ namespace GreenVerticalBot.Dialogs
         /// <param name="dialogData">Данные диалога</param>
         public DialogBase(
             DialogOrcestrator dialogOrcestrator,
-            AppConfig config,
+            BotConfiguration config,
             IUserManager userManager,
             DialogData data,
             ILogger<DialogBase> logger)

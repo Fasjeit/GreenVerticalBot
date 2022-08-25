@@ -14,8 +14,8 @@ namespace GreenVerticalBot.Dialogs
         public UserInfoDialog(
             IUserManager userManager,
             DialogOrcestrator dialogOrcestrator,
-            AppConfig config,
-            DialogData data,
+            BotConfiguration config,
+            DialogContext data,
             ILogger<UserInfoDialog> logger)
             : base(dialogOrcestrator, config, userManager, data, logger)
         {

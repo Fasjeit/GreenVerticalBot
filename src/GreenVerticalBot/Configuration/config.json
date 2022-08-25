@@ -1,5 +1,0 @@
-{
-  "BotToken": "5499376366:AAGbaoISs21teL0jsSnm9ILZvfF4HpSfo7Q",
-  "PrivateChatId": "-609858606",
-  "MySqlConnectionString": "server = 192.168.153.131; user = admin; password = password; database = green_bot"
-}

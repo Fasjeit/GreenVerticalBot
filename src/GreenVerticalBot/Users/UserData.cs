@@ -1,4 +1,6 @@
-﻿namespace GreenVerticalBot.Users
+﻿using Newtonsoft.Json.Linq;
+
+namespace GreenVerticalBot.Users
 {
     internal class UserData : Dictionary<string, object>
     {
@@ -10,6 +12,10 @@
                     invites == null)
                 {
                     return new List<Invite>();
+                }
+                if (invites is JArray invitesArray)
+                {
+                    invites = invitesArray.ToObject<List<Invite>>();
                 }
                 return (List<Invite>)invites;
             }

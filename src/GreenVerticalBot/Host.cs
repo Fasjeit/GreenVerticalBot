@@ -10,25 +10,31 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using System.Configuration;
 
 namespace GreenVerticalBot
 {
-    internal class GreenVerticalBotHost
+    internal static class GreenVerticalBotHost
     {
         public static async Task RunHost()
         {
             var builder = Host.CreateDefaultBuilder()
                 .UseSerilog();
 
-            var config = await AppConfig.GetConfigAsync();
+            //var config = await BotConfiguration.GetConfigAsync();
 
             builder.ConfigureServices(
-                (_, services) =>
+                (context, services) =>
             {
+                // Setup Bot configuration
+                services.Configure<BotConfiguration>(
+                    context.Configuration.GetSection(nameof(BotConfiguration)));
+
                 services.AddDbContext<GreenVerticalBotContext>(
                     (IServiceProvider serviceProvider, DbContextOptionsBuilder options) =>
                 {
-                    options.UseMySQL(config.MySqlConnectionString);
+                    var configuration = serviceProvider.GetConfiguration<BotConfiguration>();
+                    options.UseMySQL(configuration.MySqlConnectionString);
                 });
 
                 services.AddScoped<ITaskStore, TaskStore>();
@@ -40,7 +46,11 @@ namespace GreenVerticalBot
                 services.AddScoped<GreenBot>();
                 services.AddHttpClient();
 
-                services.AddSingleton(config);
+                services.AddSingleton<BotConfiguration>(
+                    (IServiceProvider serviceProvider) =>
+                {
+                        return serviceProvider.GetConfiguration<BotConfiguration>();
+                });
                 services.AddSingleton<DialogOrcestrator>();
 
                 services.AddScoped<WellcomeDialog>();
@@ -79,5 +89,6 @@ namespace GreenVerticalBot
             var bot = provider.GetRequiredService<GreenBot>();
             await bot.MainRutine();
         }
+
     }
 }

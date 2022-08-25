@@ -18,7 +18,7 @@ namespace GreenVerticalBot.Dialogs
 
         public AuthorizeDialog(
             DialogOrcestrator dialogOrcestrator,
-            AppConfig config,
+            BotConfiguration config,
             IUserManager userManager,
             DialogData data,
             ILogger<AuthorizeDialog> logger)

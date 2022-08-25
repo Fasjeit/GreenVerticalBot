@@ -5,7 +5,7 @@ namespace GreenVerticalBot.Configuration
     /// <summary>
     /// Конфигурация бота
     /// </summary>
-    internal class AppConfig
+    internal class BotConfiguration
     {
         /// <summary>
         /// Токен бота (получаем через BotFather телеграма)
@@ -23,25 +23,25 @@ namespace GreenVerticalBot.Configuration
         /// </summary>
         public string MySqlConnectionString { get; set; }
 
-        public AppConfig()
-        {
-        }
+        //public BotConfiguration()
+        //{
+        //}
 
-        /// <summary>
-        /// Зачитывает конфиг из локального json файла
-        /// </summary>
-        /// <returns></returns>
-        public static async Task<AppConfig> GetConfigAsync()
-        {
-            //var options = new JsonSerializerOptions()
-            //{
-            //    NumberHandling = JsonNumberHandling.AllowReadingFromString |
-            //    JsonNumberHandling.WriteAsString
-            //};
+        ///// <summary>
+        ///// Зачитывает конфиг из локального json файла
+        ///// </summary>
+        ///// <returns></returns>
+        //public static async Task<BotConfiguration> GetConfigAsync()
+        //{
+        //    //var options = new JsonSerializerOptions()
+        //    //{
+        //    //    NumberHandling = JsonNumberHandling.AllowReadingFromString |
+        //    //    JsonNumberHandling.WriteAsString
+        //    //};
 
-            return JsonConvert.DeserializeObject<AppConfig>(
-                await File.ReadAllTextAsync(
-                    Path.Combine("Configuration", "config.json")));
-        }
+        //    return JsonConvert.DeserializeObject<BotConfiguration>(
+        //        await File.ReadAllTextAsync(
+        //            Path.Combine("Configuration", "config.json")));
+        //}
     }
 }

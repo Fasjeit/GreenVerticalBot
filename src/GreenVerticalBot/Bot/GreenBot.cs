@@ -11,14 +11,14 @@ namespace GreenVerticalBot.Bot
 {
     internal class GreenBot
     {
-        private AppConfig config;
+        private BotConfiguration config;
 
         private DialogOrcestrator dialogOrcestrator;
 
         private ILogger<GreenBot> logger;
 
         public GreenBot(
-            AppConfig config,
+            BotConfiguration config,
             DialogOrcestrator dialogOrcestrator,
             ILogger<GreenBot> logger)
         {

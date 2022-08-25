@@ -32,7 +32,7 @@ namespace GreenVerticalBot.Dialogs
             IUserManager userManager,
             IHttpClientFactory httpClientFactory,
             DialogOrcestrator dialogOrcestrator,
-            AppConfig config,
+            BotConfiguration config,
             DialogData data,
             ILogger<RegisterDialog> logger)
             : base(dialogOrcestrator, config, userManager, data, logger)
