@@ -2,8 +2,9 @@
 {
     internal enum UserRole
     {
+        Admin,
         RegisteredUser,
         AccessToGeneralChat,
-        AccessToB10_9Chat
+        AccessToB9_ex10Chat
     }
 }

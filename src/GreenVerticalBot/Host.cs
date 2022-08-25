@@ -10,7 +10,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using System.Configuration;
 
 namespace GreenVerticalBot
 {
@@ -38,10 +37,10 @@ namespace GreenVerticalBot
                 });
 
                 services.AddScoped<ITaskStore, TaskStore>();
-                services.AddScoped<EntityFramework.Store.User.IUserStore, UserStore>();
+                services.AddScoped<IUserStore, UserStore>();
 
                 services.AddScoped(
-                    (services) => new DialogData());
+                    (services) => new DialogContext());
 
                 services.AddScoped<GreenBot>();
                 services.AddHttpClient();
@@ -49,7 +48,7 @@ namespace GreenVerticalBot
                 services.AddSingleton<BotConfiguration>(
                     (IServiceProvider serviceProvider) =>
                 {
-                        return serviceProvider.GetConfiguration<BotConfiguration>();
+                    return serviceProvider.GetConfiguration<BotConfiguration>();
                 });
                 services.AddSingleton<DialogOrcestrator>();
 
@@ -57,8 +56,9 @@ namespace GreenVerticalBot
                 services.AddScoped<RegisterDialog>();
                 services.AddScoped<UserInfoDialog>();
                 services.AddScoped<AuthorizeDialog>();
+                services.AddScoped<UserLookUpDialog>();
 
-                services.AddScoped<Users.IUserManager, UserManager>();
+                services.AddScoped<IUserManager, UserManager>();
 
                 services.AddHostedService<ScopeMonitor>();
             });
@@ -89,6 +89,5 @@ namespace GreenVerticalBot
             var bot = provider.GetRequiredService<GreenBot>();
             await bot.MainRutine();
         }
-
     }
 }

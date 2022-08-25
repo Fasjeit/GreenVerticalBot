@@ -1,9 +1,12 @@
-﻿using GreenVerticalBot.Helpers;
+﻿using GreenVerticalBot.Authorization;
+using GreenVerticalBot.Configuration;
+using GreenVerticalBot.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Security.Claims;
 using Telegram.Bot;
-using Telegram.Bot.Types;
+using Update = Telegram.Bot.Types.Update;
 
 namespace GreenVerticalBot.Dialogs
 {
@@ -15,7 +18,7 @@ namespace GreenVerticalBot.Dialogs
         /// <summary>
         /// Список активных диалогов
         /// </summary>
-        private ConcurrentDictionary<string, (IServiceScope dialogScope, DialogBase dialog)> dialogs;
+        private ConcurrentDictionary<string, (IServiceScope dialogScope, DialogBase dialog)> dialogRecords;
 
         private bool disposedValue;
 
@@ -26,16 +29,20 @@ namespace GreenVerticalBot.Dialogs
 
         private readonly ILogger<DialogOrcestrator> logger;
 
+        private readonly BotConfiguration config;
+
         /// <summary>
         /// Создаёт оркестратор диалогов
         /// </summary>
         public DialogOrcestrator(
             IServiceProvider provider,
+            BotConfiguration config,
             ILogger<DialogOrcestrator> logger)
         {
             this.provider = provider;
             this.logger = logger;
-            this.dialogs = new();
+            this.config = config;
+            this.dialogRecords = new();
         }
 
         /// <summary>
@@ -55,13 +62,24 @@ namespace GreenVerticalBot.Dialogs
                 return;
             }
 
+            // Не обрабатываем сообщений, которые пришли ранее, чем минуту назад
+            if (update?.Message?.Date < DateTime.UtcNow - TimeSpan.FromMinutes(1))
+            {
+                return;
+            }
+
+            if (update?.CallbackQuery?.Message?.Date < DateTime.UtcNow - TimeSpan.FromMinutes(1))
+            {
+                return;
+            }
+
             // В качестве идентификатора используем идентификатор пользователя
             var dialogId = DialogBase.GetUserId(update).ToString();
 
             try
             {
                 // Проверяем, есть ли активный диалог
-                if (!this.dialogs.TryGetValue(dialogId, out var dialogRecord))
+                if (!this.dialogRecords.TryGetValue(dialogId, out var dialogRecord))
                 {
                     // Диалога нет - создаём привественный диалог
 
@@ -76,7 +94,88 @@ namespace GreenVerticalBot.Dialogs
                     // Создаём запись о диалоге
                     dialogRecord = (dialogScope, dialog);
 
-                    this.dialogs[dialogId] = dialogRecord;
+                    this.dialogRecords[dialogId] = dialogRecord;
+                }
+
+                {
+                    // Выставляем конекст диалога
+                    var dialog = dialogRecord.dialog;
+                    await dialog.SetDialogContextAsync(botClient, update, cancellationToken);
+
+                    // Проверка авторизации
+
+                    bool isAuthorized = await this.AuthorizeAsync(dialog.GetType(), dialog.Context);
+                    if (!isAuthorized)
+                    {
+                        this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
+                                $": unauthorized access to [{dialog.GetType().Name}]");
+
+                        await botClient.SendTextMessageAsync(
+                            chatId: dialog.Context.ChatId,
+                            text:
+                                $"Доступ запрещён.",
+                            parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
+                            cancellationToken: cancellationToken);
+
+                        await this.SwitchToDialogAsync<WellcomeDialog>(
+                            dialog.Context.ChatId.ToString(),
+                            botClient,
+                            update,
+                            cancellationToken,
+                            true);
+                        return;
+                    }
+
+                    if (update?.Message?.Text == "/register")
+                    {
+                        await this.SwitchToDialogAsync<RegisterDialog>
+                            ($"{dialog.Context.ChatId}",
+                            botClient,
+                            update,
+                            cancellationToken,
+                            true);
+                        return;
+                    }
+                    else if (update?.Message?.Text == "/user")
+                    {
+                        await this.SwitchToDialogAsync<UserInfoDialog>
+                            ($"{dialog.Context.ChatId}",
+                            botClient,
+                            update,
+                            cancellationToken,
+                            true);
+                        return;
+                    }
+                    else if (update?.Message?.Text == "/authorize")
+                    {
+                        await this.SwitchToDialogAsync<AuthorizeDialog>
+                            ($"{dialog.Context.ChatId}",
+                            botClient,
+                            update,
+                            cancellationToken,
+                            true);
+                        return;
+                    }
+                    else if (update?.Message?.Text == "/help")
+                    {
+                        await this.SwitchToDialogAsync<WellcomeDialog>
+                            ($"{dialog.Context.ChatId}",
+                            botClient,
+                            update,
+                            cancellationToken,
+                            true);
+                        return;
+                    }
+                    else if (update?.Message?.Text == "/a_userlookup")
+                    {
+                        await this.SwitchToDialogAsync<UserLookUpDialog>
+                            ($"{dialog.Context.ChatId}",
+                            botClient,
+                            update,
+                            cancellationToken,
+                            true);
+                        return;
+                    }
                 }
 
                 // Обрабатываем сообщение в соответсвующем диалоге
@@ -107,22 +206,45 @@ namespace GreenVerticalBot.Dialogs
             bool proceed = false)
             where T : DialogBase
         {
-            if (!this.dialogs.ContainsKey(dialogId))
+            if (!this.dialogRecords.ContainsKey(dialogId))
             {
                 return;
                 // TODO reset scope!!!!
             }
-            if (this.dialogs[dialogId].dialog.GetType() == typeof(T))
+            var dialog = this.dialogRecords[dialogId].dialog;
+
+            var isAuthorized = await this.AuthorizeAsync(typeof(T), dialog.Context);
+            if (!isAuthorized)
             {
-                await this.dialogs[dialogId].dialog.ResetStateAsync();
+                this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
+                        $": unauthorized access to [{dialog.GetType().Name}]");
+
+                await botClient.SendTextMessageAsync(
+                    chatId: dialog.Context.ChatId,
+                    text:
+                        $"Доступ запрещён.",
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
+                    cancellationToken: cancellationToken);
+
+                await this.SwitchToDialogAsync<WellcomeDialog>(
+                    dialog.Context.ChatId.ToString(),
+                    botClient,
+                    update,
+                    cancellationToken,
+                    true);
+                return;
+            }
+            if (this.dialogRecords[dialogId].dialog.GetType() == typeof(T))
+            {
+                await this.dialogRecords[dialogId].dialog.ResetStateAsync();
             }
 
             // Создаём новый диалог
-            var scope = this.dialogs[dialogId].dialogScope;
+            var scope = this.dialogRecords[dialogId].dialogScope;
             var serviceProvider = scope.ServiceProvider;
 
             var newDialog = serviceProvider.GetRequiredService<T>();
-            this.dialogs[dialogId] = (scope, newDialog);
+            this.dialogRecords[dialogId] = (scope, newDialog);
 
             // делаем ResetState на случай, если диалог уже был создан
             await newDialog.ResetStateAsync();
@@ -137,14 +259,14 @@ namespace GreenVerticalBot.Dialogs
 
         public ICollection<string> GetScopeIds()
         {
-            return this.dialogs.Keys;
+            return this.dialogRecords.Keys;
         }
 
         public void RemoveScopes(long[] scopeIds)
         {
             foreach (var id in scopeIds)
             {
-                this.dialogs.Remove(id.ToString(), out var value);
+                this.dialogRecords.Remove(id.ToString(), out var value);
                 value.dialogScope.Dispose();
             }
         }
@@ -155,7 +277,7 @@ namespace GreenVerticalBot.Dialogs
             {
                 if (disposing)
                 {
-                    foreach (var dialog in this.dialogs.Values)
+                    foreach (var dialog in this.dialogRecords.Values)
                     {
                         dialog.dialogScope.Dispose();
                     }
@@ -179,6 +301,48 @@ namespace GreenVerticalBot.Dialogs
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        private async Task<bool> AuthorizeAsync(
+            Type dialogType,
+            DialogContext context)
+        {
+            // Выставляем админсткие Claims из конфига
+            var userid = context.TelegramUserId.ToString();
+            if (this.config?.ExtraClaims != null &&
+                this.config.ExtraClaims.Keys.Contains(userid))
+            {
+                foreach (var claim in this.config.ExtraClaims[userid])
+                {
+                    context.Claims.Add(
+                        new BotClaim(
+                            type: ClaimTypes.Role,
+                            value: claim,
+                            valueType: null,
+                            issuer: "config",
+                            originalIssuer: null));
+                }
+            }
+
+            // Проверка авторизации
+            bool isAuthorized = true;
+            object[] attrs = dialogType.GetCustomAttributes(true);
+            var rollesAttribute = attrs.FirstOrDefault(a => a is AuthorizeRolesAttribute);
+            if (rollesAttribute != null)
+            {
+                if (context?.Claims == null)
+                {
+                    isAuthorized = false;
+                }
+                else
+                {
+                    isAuthorized = ((AuthorizeRolesAttribute)rollesAttribute).RoleArray
+                        .Any(
+                            r => context.Claims.Any(
+                                dc => dc.Value == r.ToString()));
+                }
+            }
+            return isAuthorized;
         }
     }
 }

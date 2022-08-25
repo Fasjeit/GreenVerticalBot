@@ -6,12 +6,12 @@ namespace GreenVerticalBot.Helpers
     internal static class MessageHelper
     {
         public static async Task<Message> SendSimpleMessage(
-            TelegramBotClient telegramBotClient,
+            TelegramBotClient botClient,
             Update update,
             string text,
             CancellationToken cancellationToken)
         {
-            return await telegramBotClient.SendTextMessageAsync(
+            return await botClient.SendTextMessageAsync(
                         chatId: update.Message!.Chat.Id,
                         text: text,
                         parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,

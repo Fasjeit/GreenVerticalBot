@@ -22,7 +22,7 @@ namespace GreenVerticalBot.Dialogs
             this.userManager = userManager;
         }
 
-        internal override async Task ProcessUpdateCoreAsync(ITelegramBotClient telegramBotClient, Update update, CancellationToken cancellationToken)
+        internal override async Task ProcessUpdateCoreAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
             var userId = DialogBase.GetUserId(update);
 
@@ -30,27 +30,27 @@ namespace GreenVerticalBot.Dialogs
             if (user == null)
             {
                 this.Logger.LogTrace($"user with telegramId [{update.Message.From.Id}] not found");
-                await telegramBotClient.SendTextMessageAsync(
+                await botClient.SendTextMessageAsync(
                     chatId: update.Message.Chat.Id,
                     text: $"Пользователь не найден!",
                     cancellationToken: cancellationToken);
 
                 await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
                     update.Message.From.Id.ToString(),
-                    telegramBotClient,
+                    botClient,
                     update,
                     cancellationToken,
                     true);
                 return;
             }
             this.Logger.LogTrace($"user with telegramId [{update.Message.From.Id}] found!");
-            await telegramBotClient.SendTextMessageAsync(
+            await botClient.SendTextMessageAsync(
                 chatId: update.Message.Chat.Id,
                 text: $"{JsonConvert.SerializeObject(user, Formatting.Indented)}",
                 cancellationToken: cancellationToken);
             await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
                 update.Message.From.Id.ToString(),
-                telegramBotClient,
+                botClient,
                 update,
                 cancellationToken,
                 true);

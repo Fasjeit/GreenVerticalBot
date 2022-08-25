@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-
-namespace GreenVerticalBot.Configuration
+﻿namespace GreenVerticalBot.Configuration
 {
     /// <summary>
     /// Конфигурация бота
@@ -22,6 +20,8 @@ namespace GreenVerticalBot.Configuration
         /// Строка подключения к бд
         /// </summary>
         public string MySqlConnectionString { get; set; }
+
+        public Dictionary<string, List<string>> ExtraClaims { get; set; }
 
         //public BotConfiguration()
         //{

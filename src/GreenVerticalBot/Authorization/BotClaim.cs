@@ -8,4 +8,14 @@ namespace GreenVerticalBot.Authorization
             base(type, value, valueType, issuer, originalIssuer)
         { }
     }
+
+    internal static class ClaimsExtensions
+    {
+        public static bool HasRole(this List<BotClaim> claims, UserRole role)
+        {
+            return claims.Any(
+                c => c.Type == ClaimTypes.Role &&
+                c.Value == role.ToString());
+        }
+    }
 }
