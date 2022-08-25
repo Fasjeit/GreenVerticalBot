@@ -39,7 +39,7 @@ namespace GreenVerticalBot.RestModels
         /// </summary>
         public bool IsTransactionCreationRequest { get; set; }
 
-        // Получает или задает идентификаторы плагинов, 
+        // Получает или задает идентификаторы плагинов,
         // которые надо использовать для проверки.
         public List<int> CertVerifiersPluginsIds { get; set; }
     }

@@ -1,19 +1,9 @@
-﻿using GreenVerticalBot.Authorization;
-using GreenVerticalBot.Helpers;
-using GreenVerticalBot.Users;
+﻿using GreenVerticalBot.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
-using static System.Net.Mime.MediaTypeNames;
-using Telegram.Bot.Types.Enums;
 
 namespace GreenVerticalBot.Dialogs
 {
@@ -26,6 +16,7 @@ namespace GreenVerticalBot.Dialogs
         /// Список активных диалогов
         /// </summary>
         private ConcurrentDictionary<string, (IServiceScope dialogScope, DialogBase dialog)> dialogs;
+
         private bool disposedValue;
 
         /// <summary>
@@ -151,7 +142,7 @@ namespace GreenVerticalBot.Dialogs
 
         public void RemoveScopes(long[] scopeIds)
         {
-            foreach (var id in scopeIds) 
+            foreach (var id in scopeIds)
             {
                 this.dialogs.Remove(id.ToString(), out var value);
                 value.dialogScope.Dispose();

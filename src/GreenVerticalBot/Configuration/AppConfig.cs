@@ -1,6 +1,4 @@
 ﻿using Newtonsoft.Json;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace GreenVerticalBot.Configuration
 {
@@ -15,7 +13,7 @@ namespace GreenVerticalBot.Configuration
         public string BotToken { get; set; }
 
         /// <summary>
-        /// Идентификатор закрытого чата, в который бот будет присылать инвайты. 
+        /// Идентификатор закрытого чата, в который бот будет присылать инвайты.
         /// Бот должен иметь права адмна в чате
         /// </summary>
         public long PrivateChatId { get; set; }

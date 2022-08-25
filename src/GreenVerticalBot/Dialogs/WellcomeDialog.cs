@@ -19,13 +19,13 @@ namespace GreenVerticalBot.Dialogs
         }
 
         internal override async Task ProcessUpdateCoreAsync(
-            ITelegramBotClient telegramBotClient, 
-            Update update, 
+            ITelegramBotClient telegramBotClient,
+            Update update,
             CancellationToken cancellationToken)
         {
             var userId = this.Data.TelegramUserId;
 
-            // Выводим привественное сообщение    
+            // Выводим привественное сообщение
             Message sentMessage = await telegramBotClient.SendTextMessageAsync(
                 chatId: userId,
                 text: $"Список команд:{Environment.NewLine}" +

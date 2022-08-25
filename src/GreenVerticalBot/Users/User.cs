@@ -1,8 +1,6 @@
 ﻿using GreenVerticalBot.Authorization;
 using GreenVerticalBot.EntityFramework.Entities;
 using Newtonsoft.Json;
-using System.Security.Claims;
-using System.Text.Json;
 
 namespace GreenVerticalBot.Users
 {
@@ -14,7 +12,7 @@ namespace GreenVerticalBot.Users
         public DateTimeOffset LastAccessTime { get; set; } = DateTimeOffset.UtcNow;
         public List<BotClaim> Claims { get; set; } = new List<BotClaim>();
         public string Building { get; set; } = UserEntity.BuildingId.None;
-        public UserData Data { get; set; } = new ();
+        public UserData Data { get; set; } = new();
         public string Status { get; set; } = UserEntity.StatusFormats.Active;
     }
 

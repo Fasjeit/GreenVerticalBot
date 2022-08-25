@@ -1,5 +1,4 @@
 ﻿using GreenVerticalBot.Authorization;
-using GreenVerticalBot.Bot;
 using GreenVerticalBot.Configuration;
 using GreenVerticalBot.EntityFramework.Entities;
 using GreenVerticalBot.Helpers;
@@ -7,13 +6,8 @@ using GreenVerticalBot.RestModels;
 using GreenVerticalBot.Users;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using Telegram.Bot;
@@ -22,10 +16,9 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace GreenVerticalBot.Dialogs
 {
-
     // 77:05:0008007:14033-77/060/2021-902
     // 77:05:0008007:14033 - участок
-    // 
+    //
 
     internal class RegisterDialog : DialogBase
     {
@@ -199,7 +192,6 @@ namespace GreenVerticalBot.Dialogs
                         return;
                     }
 
-
                     // В идеале лучше разобрать Xml файл и выкусить узел registration_number, но на текущем этапе просто ищем подстроку
                     // в текстовом представлении файла
                     var fileString = Encoding.UTF8.GetString(fileContenst);
@@ -257,8 +249,6 @@ namespace GreenVerticalBot.Dialogs
 
                         verificationResult = verificationResults[0];
                     }
-
-
                     catch (Exception)
                     {
                         Message error = await telegramBotClient.SendTextMessageAsync(
@@ -299,7 +289,7 @@ namespace GreenVerticalBot.Dialogs
                         value: UserRole.RegisteredUser.ToString(),
                         valueType: null,
                         issuer: "auto_register_bot",
-                        originalIssuer: null); 
+                        originalIssuer: null);
 
                     await this.userManager.AddUserAsync(
                         new()

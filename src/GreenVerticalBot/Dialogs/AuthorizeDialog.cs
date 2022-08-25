@@ -1,16 +1,8 @@
 ﻿using GreenVerticalBot.Authorization;
-using GreenVerticalBot.Bot;
 using GreenVerticalBot.Configuration;
-using GreenVerticalBot.EntityFramework.Entities;
 using GreenVerticalBot.Helpers;
 using GreenVerticalBot.Users;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
@@ -25,11 +17,11 @@ namespace GreenVerticalBot.Dialogs
         private readonly IUserManager userManager;
 
         public AuthorizeDialog(
-            DialogOrcestrator dialogOrcestrator, 
-            AppConfig config, 
+            DialogOrcestrator dialogOrcestrator,
+            AppConfig config,
             IUserManager userManager,
             DialogData data,
-            ILogger<AuthorizeDialog> logger) 
+            ILogger<AuthorizeDialog> logger)
             : base(dialogOrcestrator, config, userManager, data, logger)
         {
             this.userManager = userManager;
@@ -112,10 +104,9 @@ namespace GreenVerticalBot.Dialogs
                                 this.Config.PrivateChatId),
                             name: StringFormatHelper.GetInviteString(
                                 update.Message.From.Username,
-                                userId.ToString(), 
+                                userId.ToString(),
                                 this.Config.PrivateChatId.ToString()),
                             memberLimit: 1);
-
 
                         //// Делаем запись в бд
                         //await this.taskStore.AddTaskAsync(

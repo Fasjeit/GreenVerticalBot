@@ -3,7 +3,6 @@ using GreenVerticalBot.Configuration;
 using GreenVerticalBot.Helpers;
 using GreenVerticalBot.Users;
 using Microsoft.Extensions.Logging;
-using System.Security.Claims;
 using Telegram.Bot;
 using Update = Telegram.Bot.Types.Update;
 
@@ -25,7 +24,7 @@ namespace GreenVerticalBot.Dialogs
 
         private IUserManager userManager { get; set; }
 
-        protected DialogData Data { get; set;}
+        protected DialogData Data { get; set; }
 
         /// <summary>
         /// Создаёт диалог
@@ -57,120 +56,118 @@ namespace GreenVerticalBot.Dialogs
         /// <param name="cancellationToken">Токен отмены</param>
         public virtual async Task ProcessUpdateAsync(ITelegramBotClient telegramBotClient, Update update, CancellationToken cancellationToken)
         {
-                await this.SetDialogDataAsync(
+            await this.SetDialogDataAsync(
+                telegramBotClient,
+                update,
+                cancellationToken);
+
+            var user = this.Data.User;
+            if (user != null &&
+                user.LastAccessTime < DateTime.UtcNow - TimeSpan.FromMinutes(1))
+            {
+                // Если пользователь был активен более бинуты назад - обновляем время активности
+                user.LastAccessTime = DateTimeOffset.UtcNow;
+            }
+
+            // Не обрабатываем сообщений, которые пришли ранее, чем минуту назад
+            if (update?.Message?.Date < DateTime.UtcNow - TimeSpan.FromMinutes(1))
+            {
+                return;
+            }
+
+            if (update?.CallbackQuery?.Message?.Date < DateTime.UtcNow - TimeSpan.FromMinutes(1))
+            {
+                return;
+            }
+
+            // Проверка авторизации
+            bool isAuthorized = true;
+            object[] attrs = this.GetType().GetCustomAttributes(true);
+            var rollesAttribute = attrs.FirstOrDefault(a => a is AuthorizeRolesAttribute);
+            if (rollesAttribute != null)
+            {
+                if (this.Data?.Claims == null)
+                {
+                    isAuthorized = false;
+                }
+                else
+                {
+                    isAuthorized = ((AuthorizeRolesAttribute)rollesAttribute).RoleArray
+                        .Any(
+                            r => this.Data.Claims.Any(
+                                dc => dc.Value == r.ToString()));
+                }
+            }
+            if (!isAuthorized)
+            {
+                this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
+                        $": unauthorized");
+
+                await telegramBotClient.SendTextMessageAsync(
+                    chatId: this.Data.ChatId,
+                    text:
+                        $"Доступ запрещён.",
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
+                    cancellationToken: cancellationToken);
+
+                await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
+                    this.Data.ChatId.ToString(),
                     telegramBotClient,
                     update,
-                    cancellationToken);
+                    cancellationToken,
+                    true);
+            }
 
-                var user = this.Data.User;
-                if (user != null &&
-                    user.LastAccessTime < DateTime.UtcNow - TimeSpan.FromMinutes(1))
-                {
-                    // Если пользователь был активен более бинуты назад - обновляем время активности
-                    user.LastAccessTime = DateTimeOffset.UtcNow;
-                }
+            if (update?.Message?.Text == "/register")
+            {
+                await this.dialogOrcestrator.SwitchToDialogAsync<RegisterDialog>
+                    ($"{this.Data.ChatId}",
+                    telegramBotClient,
+                    update,
+                    cancellationToken,
+                    true);
+                return;
+            }
+            else if (update?.Message?.Text == "/user")
+            {
+                await this.dialogOrcestrator.SwitchToDialogAsync<UserInfoDialog>
+                    ($"{this.Data.ChatId}",
+                    telegramBotClient,
+                    update,
+                    cancellationToken,
+                    true);
+                return;
+            }
+            else if (update?.Message?.Text == "/authorize")
+            {
+                await this.dialogOrcestrator.SwitchToDialogAsync<AuthorizeDialog>
+                    ($"{this.Data.ChatId}",
+                    telegramBotClient,
+                    update,
+                    cancellationToken,
+                    true);
+                return;
+            }
+            else if (update?.Message?.Text == "/help")
+            {
+                await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>
+                    ($"{this.Data.ChatId}",
+                    telegramBotClient,
+                    update,
+                    cancellationToken,
+                    true);
+                return;
+            }
 
-                // Не обрабатываем сообщений, которые пришли ранее, чем минуту назад
-                if (update?.Message?.Date < DateTime.UtcNow - TimeSpan.FromMinutes(1))
-                {
-                    return;
-                }
+            //var chatId = message.Chat.Id;
 
-                if (update?.CallbackQuery?.Message?.Date < DateTime.UtcNow - TimeSpan.FromMinutes(1))
-                {
-                    return;
-                }
+            //// Игнорируем сообщения в целевом чате (в него только выдаём инвайты)
+            //if (chatId == this.Config.PrivateChatId)
+            //{
+            //    return;
+            //}
 
-                // Проверка авторизации
-                bool isAuthorized = true;
-                object[] attrs = this.GetType().GetCustomAttributes(true);
-                var rollesAttribute = attrs.FirstOrDefault(a => a is AuthorizeRolesAttribute);
-                if (rollesAttribute != null)
-                {
-                    if (this.Data?.Claims == null)
-                    {
-                        isAuthorized = false;
-                    }
-                    else
-                    {
-                        isAuthorized = ((AuthorizeRolesAttribute)rollesAttribute).RoleArray
-                            .Any(
-                                r => this.Data.Claims.Any(
-                                    dc => dc.Value == r.ToString()));
-                    }
-                }
-                if (!isAuthorized)
-                {
-                    this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
-                            $": unauthorized");
-
-                    await telegramBotClient.SendTextMessageAsync(
-                        chatId: this.Data.ChatId,
-                        text:
-                            $"Доступ запрещён.",
-                        parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
-                        cancellationToken: cancellationToken);
-
-                    await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
-                        this.Data.ChatId.ToString(),
-                        telegramBotClient,
-                        update,
-                        cancellationToken,
-                        true);
-                }
-
-                if (update?.Message?.Text == "/register")
-                {
-                    await this.dialogOrcestrator.SwitchToDialogAsync<RegisterDialog>
-                        ($"{this.Data.ChatId}",
-                        telegramBotClient,
-                        update,
-                        cancellationToken,
-                        true);
-                    return;
-                }
-                else if (update?.Message?.Text == "/user")
-                {
-                    await this.dialogOrcestrator.SwitchToDialogAsync<UserInfoDialog>
-                        ($"{this.Data.ChatId}",
-                        telegramBotClient,
-                        update,
-                        cancellationToken,
-                        true);
-                    return;
-                }
-                else if (update?.Message?.Text == "/authorize")
-                {
-                    await this.dialogOrcestrator.SwitchToDialogAsync<AuthorizeDialog>
-                        ($"{this.Data.ChatId}",
-                        telegramBotClient,
-                        update,
-                        cancellationToken,
-                        true);
-                    return;
-                }
-
-                else if (update?.Message?.Text == "/help")
-                {
-                    await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>
-                        ($"{this.Data.ChatId}",
-                        telegramBotClient,
-                        update,
-                        cancellationToken,
-                        true);
-                    return;
-                }
-
-                //var chatId = message.Chat.Id;
-
-                //// Игнорируем сообщения в целевом чате (в него только выдаём инвайты)
-                //if (chatId == this.Config.PrivateChatId)
-                //{
-                //    return;
-                //}            
-
-                await this.ProcessUpdateCoreAsync(telegramBotClient, update, cancellationToken);
-
+            await this.ProcessUpdateCoreAsync(telegramBotClient, update, cancellationToken);
         }
 
         internal abstract Task ProcessUpdateCoreAsync(ITelegramBotClient telegramBotClient, Update update, CancellationToken cancellationToken);

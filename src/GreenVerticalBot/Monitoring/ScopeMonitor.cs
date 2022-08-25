@@ -26,6 +26,7 @@ namespace GreenVerticalBot.Monitoring
         /// Получает или задает таймер мониторинга истёкших транзакций.
         /// </summary>
         private System.Timers.Timer expirationMonitorTimer;
+
         private bool disposedValue;
 
         /// <summary>

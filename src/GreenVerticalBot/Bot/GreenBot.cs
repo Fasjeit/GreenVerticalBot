@@ -18,7 +18,7 @@ namespace GreenVerticalBot.Bot
         private ILogger<GreenBot> logger;
 
         public GreenBot(
-            AppConfig config, 
+            AppConfig config,
             DialogOrcestrator dialogOrcestrator,
             ILogger<GreenBot> logger)
         {
@@ -33,8 +33,8 @@ namespace GreenVerticalBot.Bot
             var botClient = new TelegramBotClient(this.config.BotToken);
 
             await botClient.SetMyCommandsAsync(
-                new List<BotCommand>() 
-                { 
+                new List<BotCommand>()
+                {
                     new () { Command = @"/register", Description = "Регистрация жильца" },
                     new () { Command = @"/user", Description = "Просмотр профиля" },
                     new () { Command = @"/authorize", Description = "Получение доступа к чатам и ресурсам" },

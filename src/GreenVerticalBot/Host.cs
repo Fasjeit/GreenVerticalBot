@@ -1,20 +1,15 @@
-﻿using GreenVerticalBot.EntityFramework;
-
+﻿using GreenVerticalBot.Bot;
+using GreenVerticalBot.Configuration;
+using GreenVerticalBot.Dialogs;
+using GreenVerticalBot.EntityFramework;
+using GreenVerticalBot.EntityFramework.Store.Tasks;
+using GreenVerticalBot.EntityFramework.Store.User;
+using GreenVerticalBot.Monitoring;
+using GreenVerticalBot.Users;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
-using Microsoft.EntityFrameworkCore;
-using GreenVerticalBot.Bot;
-using GreenVerticalBot.Configuration;
-using Telegram.Bot;
-using Telegram.Bot.Polling;
-using Telegram.Bot.Types.Enums;
-using GreenVerticalBot.Dialogs;
-using GreenVerticalBot.EntityFramework.Store.Tasks;
-using GreenVerticalBot.Users;
-using GreenVerticalBot.EntityFramework.Store.User;
 using Serilog;
-using GreenVerticalBot.Monitoring;
 
 namespace GreenVerticalBot
 {
@@ -55,7 +50,6 @@ namespace GreenVerticalBot
 
                 services.AddScoped<Users.IUserManager, UserManager>();
 
-
                 services.AddHostedService<ScopeMonitor>();
             });
 
@@ -67,7 +61,7 @@ namespace GreenVerticalBot
             }
         }
 
-        static async Task MainRutine(IServiceProvider services, string scope)
+        private static async Task MainRutine(IServiceProvider services, string scope)
         {
             using IServiceScope serviceScope = services.CreateScope();
             IServiceProvider provider = serviceScope.ServiceProvider;
