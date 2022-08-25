@@ -38,6 +38,7 @@ namespace GreenVerticalBot.Bot
                     new () { Command = @"/register", Description = "Регистрация жильца" },
                     new () { Command = @"/user", Description = "Просмотр профиля" },
                     new () { Command = @"/authorize", Description = "Получение доступа к чатам и ресурсам" },
+                    new () { Command = @"/help", Description = "Вывод списка команд" },
                 });
 
             using var cts = new CancellationTokenSource();

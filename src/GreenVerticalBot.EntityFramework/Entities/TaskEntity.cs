@@ -11,6 +11,7 @@ namespace GreenVerticalBot.EntityFramework.Entities
         public string Id { get; set; } = Guid.NewGuid().ToString();
         public string Type { get; set; } = TaskEntity.TaskTypes.RegisterUser;
         public long CreationTime { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        public long UpdateTime { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         public string Data { get; set; } = "{}";
         public string Status { get; set; } = TaskEntity.StatusFormats.Created;
         public string? LinkenObject { get; set; }

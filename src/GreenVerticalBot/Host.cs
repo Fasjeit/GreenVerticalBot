@@ -14,6 +14,7 @@ using GreenVerticalBot.EntityFramework.Store.Tasks;
 using GreenVerticalBot.Users;
 using GreenVerticalBot.EntityFramework.Store.User;
 using Serilog;
+using GreenVerticalBot.Monitoring;
 
 namespace GreenVerticalBot
 {
@@ -30,18 +31,21 @@ namespace GreenVerticalBot
                 (_, services) =>
             {
                 services.AddDbContext<GreenVerticalBotContext>(
-                    (serviceProvider, options) =>
+                    (IServiceProvider serviceProvider, DbContextOptionsBuilder options) =>
                 {
                     options.UseMySQL(config.MySqlConnectionString);
                 });
 
                 services.AddScoped<ITaskStore, TaskStore>();
-                services.AddScoped<IUserStore, UserStore>();
+                services.AddScoped<EntityFramework.Store.User.IUserStore, UserStore>();
+
+                services.AddScoped(
+                    (services) => new DialogData());
 
                 services.AddScoped<GreenBot>();
                 services.AddHttpClient();
 
-                services.AddSingleton<AppConfig>(config);
+                services.AddSingleton(config);
                 services.AddSingleton<DialogOrcestrator>();
 
                 services.AddScoped<WellcomeDialog>();
@@ -49,7 +53,10 @@ namespace GreenVerticalBot
                 services.AddScoped<UserInfoDialog>();
                 services.AddScoped<AuthorizeDialog>();
 
-                services.AddScoped<IUserManager, UserManager>();
+                services.AddScoped<Users.IUserManager, UserManager>();
+
+
+                services.AddHostedService<ScopeMonitor>();
             });
 
             using (var host = builder.Build())

@@ -1,8 +1,10 @@
-﻿using GreenVerticalBot.Bot;
+﻿using GreenVerticalBot.Authorization;
+using GreenVerticalBot.Bot;
 using GreenVerticalBot.Configuration;
 using GreenVerticalBot.EntityFramework.Entities;
 using GreenVerticalBot.Helpers;
 using GreenVerticalBot.Users;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -15,6 +17,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace GreenVerticalBot.Dialogs
 {
+    [AuthorizeRoles(UserRole.RegisteredUser)]
     internal class AuthorizeDialog : DialogBase
     {
         private AuthorizeDialogState state;
@@ -25,41 +28,45 @@ namespace GreenVerticalBot.Dialogs
             DialogOrcestrator dialogOrcestrator, 
             AppConfig config, 
             IUserManager userManager,
+            DialogData data,
             ILogger<AuthorizeDialog> logger) 
-            : base(dialogOrcestrator, config, logger)
+            : base(dialogOrcestrator, config, userManager, data, logger)
         {
             this.userManager = userManager;
 
             this.state = AuthorizeDialogState.Init;
         }
 
-        public override async Task ProcessUpdateCore(
+        internal override async Task ProcessUpdateCoreAsync(
             ITelegramBotClient telegramBotClient,
             Update update,
             CancellationToken cancellationToken)
         {
-            var user = await this.userManager.GetUserByTelegramIdAsync(update.Message.From.Id);
-            if (user == null ||
-                user.Status != UserEntity.StatusFormats.Active)
-            {
-                this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
-                        $": unauthorized");
+            var userId = DialogBase.GetUserId(update);
 
-                await telegramBotClient.SendTextMessageAsync(
-                    chatId: update.Message.Chat.Id,
-                    text:
-                        $"Доступ запрещён.",
-                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
-                    cancellationToken: cancellationToken);
+            //var user = await this.userManager.GetUserByTelegramIdAsync(userId);
+            //if (user == null ||
+            //    user.Status != UserEntity.StatusFormats.Active &&
+            //    this.Data.ClaimsPrincipal.IsInRole("RegisteredUser"))
+            //{
+            //    this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
+            //            $": unauthorized");
 
-                this.dialogOrcestrator.SwitchToDialog<WellcomeDialog>(
-                    update.Message.From.Id.ToString(),
-                    telegramBotClient,
-                    update,
-                    cancellationToken,
-                    true);
-                return;
-            }
+            //    await telegramBotClient.SendTextMessageAsync(
+            //        chatId: update.Message.Chat.Id,
+            //        text:
+            //            $"Доступ запрещён.",
+            //        parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
+            //        cancellationToken: cancellationToken);
+
+            //    await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
+            //        userId.ToString(),
+            //        telegramBotClient,
+            //        update,
+            //        cancellationToken,
+            //        true);
+            //    return;
+            //}
             switch (this.state)
             {
                 case AuthorizeDialogState.Init:
@@ -104,8 +111,8 @@ namespace GreenVerticalBot.Dialogs
                             new ChatId(
                                 this.Config.PrivateChatId),
                             name: StringFormatHelper.GetInviteString(
-                                update.Message.From.Username, 
-                                update.Message.From.Id.ToString(), 
+                                update.Message.From.Username,
+                                userId.ToString(), 
                                 this.Config.PrivateChatId.ToString()),
                             memberLimit: 1);
 
@@ -119,7 +126,7 @@ namespace GreenVerticalBot.Dialogs
                         //    });
 
                         // Перезаписываем, так как там оболочка вокруг словаря
-                        var invites = user.Data.Invites;
+                        var invites = this.Data!.User!.Data.Invites;
                         invites.Add(
                             new Invite()
                             {
@@ -127,21 +134,21 @@ namespace GreenVerticalBot.Dialogs
                                 Despription = "Приглашение в общий закрытый чат",
                                 Value = $"{inviteLink.InviteLink}"
                             });
-                        user.Data.Invites = invites;
+                        this.Data.User.Data.Invites = invites;
 
-                        await this.userManager.UpdateUserAsync(user);
+                        await this.userManager.UpdateUserAsync(this.Data.User);
 
-                        this.logger.LogInformation($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : " +
+                        this.Logger.LogInformation($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : " +
                             $"new invite link generated [{inviteLink.Name} | value: {inviteLink.InviteLink}]");
 
                         // Отправляем инвайт
                         Message sentMessage = await telegramBotClient.SendTextMessageAsync(
-                            chatId: update.Message.From.Id,
+                            chatId: userId,
                             text: $"{inviteLink.InviteLink}",
                             cancellationToken: cancellationToken);
 
-                        this.dialogOrcestrator.SwitchToDialog<WellcomeDialog>(
-                            update.Message.From.Id.ToString(),
+                        await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
+                            userId.ToString(),
                             telegramBotClient,
                             update,
                             cancellationToken,
@@ -150,7 +157,7 @@ namespace GreenVerticalBot.Dialogs
                     }
                     else
                     {
-                        this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
+                        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
                         $": unknown authorize target [{this.state}]");
 
                         await telegramBotClient.SendTextMessageAsync(
@@ -159,8 +166,8 @@ namespace GreenVerticalBot.Dialogs
                                 $"Данная операция временно невозможна.",
                             parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
                             cancellationToken: cancellationToken);
-                        this.dialogOrcestrator.SwitchToDialog<WellcomeDialog>(
-                            update.Message.From.Id.ToString(),
+                        await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
+                            userId.ToString(),
                             telegramBotClient,
                             update,
                             cancellationToken,
@@ -170,7 +177,7 @@ namespace GreenVerticalBot.Dialogs
                 }
                 default:
                 {
-                    this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
+                    this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
                         $": unknown authorize state [{this.state}]");
 
                     await telegramBotClient.SendTextMessageAsync(
@@ -179,8 +186,8 @@ namespace GreenVerticalBot.Dialogs
                             $"Данная операция временно невозможна.",
                         parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
                         cancellationToken: cancellationToken);
-                    this.dialogOrcestrator.SwitchToDialog<WellcomeDialog>(
-                            update.Message.From.Id.ToString(),
+                    await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
+                            userId.ToString(),
                             telegramBotClient,
                             update,
                             cancellationToken,
@@ -190,7 +197,7 @@ namespace GreenVerticalBot.Dialogs
             }
         }
 
-        public override Task ResetState()
+        public override Task ResetStateAsync()
         {
             this.state = AuthorizeDialogState.Init;
             return Task.CompletedTask;

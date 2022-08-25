@@ -1,5 +1,7 @@
-﻿using GreenVerticalBot.EntityFramework.Entities;
+﻿using GreenVerticalBot.Authorization;
+using GreenVerticalBot.EntityFramework.Entities;
 using Newtonsoft.Json;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace GreenVerticalBot.Users
@@ -10,7 +12,7 @@ namespace GreenVerticalBot.Users
         public long TelegramId { get; set; } = 0;
         public DateTimeOffset CreationTime { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset LastAccessTime { get; set; } = DateTimeOffset.UtcNow;
-        public string Role { get; set; } = UserEntity.UserRols.UnauthorizedUser;
+        public List<BotClaim> Claims { get; set; } = new List<BotClaim>();
         public string Building { get; set; } = UserEntity.BuildingId.None;
         public UserData Data { get; set; } = new ();
         public string Status { get; set; } = UserEntity.StatusFormats.Active;
@@ -26,7 +28,7 @@ namespace GreenVerticalBot.Users
                 TelegramId = user.TelegramId,
                 CreationTime = user.CreationTime.ToUnixTimeSeconds(),
                 LastAccessTime = user.LastAccessTime.ToUnixTimeSeconds(),
-                Role = user.Role,
+                Claims = JsonConvert.SerializeObject(user.Claims),
                 Building = user.Building,
                 Data = JsonConvert.SerializeObject(user.Data),
                 Status = user.Status,
@@ -41,7 +43,7 @@ namespace GreenVerticalBot.Users
                 TelegramId = userEntity.TelegramId,
                 CreationTime = DateTimeOffset.FromUnixTimeSeconds(userEntity.CreationTime),
                 LastAccessTime = DateTimeOffset.FromUnixTimeSeconds(userEntity.LastAccessTime),
-                Role = userEntity.Role,
+                Claims = JsonConvert.DeserializeObject<List<BotClaim>>(userEntity.Claims),
                 Building = userEntity.Building,
                 Data = JsonConvert.DeserializeObject<UserData>(userEntity.Data),
                 Status = userEntity.Status,

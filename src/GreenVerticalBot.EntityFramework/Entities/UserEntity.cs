@@ -12,7 +12,7 @@ namespace GreenVerticalBot.EntityFramework.Entities
         public long TelegramId { get; set; } = 0;
         public long CreationTime { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         public long LastAccessTime { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        public string Role { get; set; } = UserEntity.UserRols.UnauthorizedUser;
+        public string Claims { get; set; } = string.Empty;
         public string Building { get; set; } = UserEntity.BuildingId.None;
         public string Data { get; set; } = "{}";
         public string Status { get; set; } = UserEntity.StatusFormats.Active;
@@ -24,7 +24,7 @@ namespace GreenVerticalBot.EntityFramework.Entities
             public const string Blocked = "blocked";
         }
 
-        public static class UserRols
+        public static class ClaimString
         {
             public const string Owner = "owner";
             public const string Admin = "admin";

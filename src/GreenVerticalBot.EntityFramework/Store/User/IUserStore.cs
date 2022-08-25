@@ -27,6 +27,13 @@ namespace GreenVerticalBot.EntityFramework.Store.User
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
+        Task<long[]> GetActiveUsersTelegramIdAsync(long[] telegramUserId, long thresholdTime);
+
+        /// <summary>
+        /// Получить информацию о пользователе
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         Task<UserEntity?> GetUserByTelegramIdAsync(long telegramUserId);
 
         /// <summary>

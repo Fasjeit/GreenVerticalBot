@@ -1,6 +1,8 @@
-﻿using GreenVerticalBot.Bot;
+﻿using GreenVerticalBot.Authorization;
+using GreenVerticalBot.Bot;
 using GreenVerticalBot.Configuration;
 using GreenVerticalBot.EntityFramework.Entities;
+using GreenVerticalBot.Helpers;
 using GreenVerticalBot.RestModels;
 using GreenVerticalBot.Users;
 using Microsoft.Extensions.Logging;
@@ -8,6 +10,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -37,8 +40,9 @@ namespace GreenVerticalBot.Dialogs
             IHttpClientFactory httpClientFactory,
             DialogOrcestrator dialogOrcestrator,
             AppConfig config,
+            DialogData data,
             ILogger<RegisterDialog> logger)
-            : base(dialogOrcestrator, config, logger)
+            : base(dialogOrcestrator, config, userManager, data, logger)
         {
             this.userManager = userManager ??
                 throw new ArgumentNullException(nameof(userManager));
@@ -46,28 +50,30 @@ namespace GreenVerticalBot.Dialogs
             this.svsCLient = httpClientFactory.CreateClient();
         }
 
-        public override async Task ProcessUpdateCore(
+        internal override async Task ProcessUpdateCoreAsync(
             ITelegramBotClient telegramBotClient,
             Update update,
             CancellationToken cancellationToken)
         {
+            var userId = DialogBase.GetUserId(update);
+
             switch (this.state)
             {
                 case RegisterDialogState.Initial:
                 {
-                    var user = await this.userManager.GetUserByTelegramIdAsync(update.Message.From.Id);
+                    var user = this.Data.User;
                     if (user != null &&
                         user.Status != UserEntity.StatusFormats.New)
                     {
                         await telegramBotClient.SendTextMessageAsync(
-                            chatId: update.Message.Chat.Id,
+                            chatId: this.Data.ChatId,
                             text:
                                 $"Пользователь уже зарегистрирован.{Environment.NewLine}" +
                                 $"Используйте команду /user для просмотра информации",
                             parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
                             cancellationToken: cancellationToken);
 
-                        this.dialogOrcestrator.SwitchToDialog<WellcomeDialog>(
+                        await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
                             user.TelegramId.ToString(),
                              telegramBotClient,
                              update,
@@ -87,15 +93,16 @@ namespace GreenVerticalBot.Dialogs
                         }
                     })
                     {
-                        OneTimeKeyboard = true
+                        OneTimeKeyboard = true,
+                        ResizeKeyboard = true,
                     };
 
-                    var sentMessage = await telegramBotClient.SendTextMessageAsync(
-                        chatId: update.Message.Chat.Id,
+                    await telegramBotClient.SendTextMessageAsync(
+                        chatId: this.Data.ChatId,
                         text:
                             $"Выберите способы регистации:{Environment.NewLine}{Environment.NewLine}" +
-                            $" /rosteestr Штамп о регистрации ДДУ в Росреестре{Environment.NewLine}{Environment.NewLine}" +
-                            $" /etc Прочий документ, подтверждающий владение",
+                            $"* /rosteestr Штамп о регистрации ДДУ в Росреестре{Environment.NewLine}" +
+                            $"* /etc Прочий документ, подтверждающий владение",
                         parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
                         replyMarkup: keyboard,
                         cancellationToken: cancellationToken);
@@ -104,10 +111,20 @@ namespace GreenVerticalBot.Dialogs
                 }
                 case RegisterDialogState.SelectRegistrationType:
                 {
-                    if (update.Message.Text.StartsWith("/rosreestr"))
+                    //if (update?.CallbackQuery?.Data == null)
+                    //{
+                    //    return;
+                    //}
+                    if (update!.Message!.Text!.StartsWith("/rosreestr"))
                     {
-                        var sentMessage = await telegramBotClient.SendTextMessageAsync(
-                            chatId: update.Message.Chat.Id,
+                        //await telegramBotClient.AnswerCallbackQueryAsync(
+                        //    update.CallbackQuery.Id,
+                        //    "Приложите файл со штампом регистрации с расширением [.xml].",
+                        //    showAlert: false,
+                        //    cancellationToken: cancellationToken);
+
+                        await telegramBotClient.SendTextMessageAsync(
+                            chatId: this.Data.ChatId,
                             text: $"Приложите файл со штампом регистрации с расширением [.xml].",
                             cancellationToken: cancellationToken,
                             replyMarkup: new ReplyKeyboardRemove());
@@ -115,8 +132,8 @@ namespace GreenVerticalBot.Dialogs
                     }
                     else
                     {
-                        var sentMessage = await telegramBotClient.SendTextMessageAsync(
-                            chatId: update.Message.Chat.Id,
+                        await telegramBotClient.SendTextMessageAsync(
+                            chatId: userId,
                             text: $"Данный способ регистрации временно не поддерживается",
                             cancellationToken: cancellationToken,
                             replyMarkup: new ReplyKeyboardRemove());
@@ -127,27 +144,26 @@ namespace GreenVerticalBot.Dialogs
                 case RegisterDialogState.RegisterWithRosreestrDduStampStart:
                 {
                     var message = update.Message;
-                    var chatId = message.Chat.Id;
 
                     // игнорируем обработку любых сообщений, кроме вложенных файлов
                     if (update.Message?.Document is not { } document)
                     {
                         await telegramBotClient.SendTextMessageAsync(
-                            chatId: update.Message.Chat.Id,
+                            chatId: this.Data.ChatId,
                             text: $"Приложите файл со штампом регистрации с расширением [.xml].",
                             cancellationToken: cancellationToken);
 
-                        this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : not a file message");
+                        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : not a file message");
                         return;
                     }
                     var documentSize = message.Document.FileSize;
                     if (documentSize > 100000)
                     {
                         Message error = await telegramBotClient.SendTextMessageAsync(
-                           chatId: chatId,
+                           chatId: this.Data.ChatId,
                            text: $"Слишком большой файл",
                            cancellationToken: cancellationToken);
-                        this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : too big file [{documentSize}]");
+                        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : too big file [{documentSize}]");
                         return;
                     }
 
@@ -176,10 +192,10 @@ namespace GreenVerticalBot.Dialogs
                     catch (XmlException exception)
                     {
                         Message error = await telegramBotClient.SendTextMessageAsync(
-                           chatId: chatId,
+                           chatId: this.Data.ChatId,
                            text: $"Некооректный документ",
                            cancellationToken: cancellationToken);
-                        this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : invalid doc, [{exception}]");
+                        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : invalid doc, [{exception}]");
                         return;
                     }
 
@@ -190,15 +206,15 @@ namespace GreenVerticalBot.Dialogs
                     if (!fileString.Contains("77:05:0008007:14033-77/", StringComparison.OrdinalIgnoreCase))
                     {
                         Message error = await telegramBotClient.SendTextMessageAsync(
-                            chatId: chatId,
+                            chatId: this.Data.ChatId,
                             text: $"Некооректный документ",
                             cancellationToken: cancellationToken);
-                        this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : doc not containing expected id");
+                        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : doc not containing expected id");
                         return;
                     }
 
                     await telegramBotClient.SendTextMessageAsync(
-                           chatId: update.Message.Chat.Id,
+                           chatId: this.Data.ChatId,
                            text: $"Ожидайте проверки файла.",
                            cancellationToken: cancellationToken);
 
@@ -232,10 +248,10 @@ namespace GreenVerticalBot.Dialogs
                         {
                             // найдено 2 подписи. такое может быть, но не встречал. лучше пока ругаемся
                             Message error = await telegramBotClient.SendTextMessageAsync(
-                                chatId: chatId,
+                                chatId: this.Data.ChatId,
                                 text: $"Не удалось распознать резульатат проверки",
                                 cancellationToken: cancellationToken);
-                            this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : invalid signature validation result");
+                            this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : invalid signature validation result");
                             return;
                         }
 
@@ -246,10 +262,10 @@ namespace GreenVerticalBot.Dialogs
                     catch (Exception)
                     {
                         Message error = await telegramBotClient.SendTextMessageAsync(
-                               chatId: chatId,
+                               chatId: this.Data.ChatId,
                                text: $"Не удалось распознать резульатат проверки",
                                cancellationToken: cancellationToken);
-                        this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : invalid signature validation result");
+                        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : invalid signature validation result");
                         return;
                     }
 
@@ -260,10 +276,10 @@ namespace GreenVerticalBot.Dialogs
                         !verificationResult.SignerCertificateInfo[CertificateInfoParams.SubjectName].Contains("росреестр", StringComparison.OrdinalIgnoreCase))
                     {
                         Message error = await telegramBotClient.SendTextMessageAsync(
-                            chatId: chatId,
+                            chatId: this.Data.ChatId,
                             text: $"Не удалось распознать подписанта",
                             cancellationToken: cancellationToken);
-                        this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : invalid signature subject " +
+                        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : invalid signature subject " +
                             $"[{verificationResult?.SignerCertificateInfo[CertificateInfoParams.SubjectName]}]");
                         return;
                     }
@@ -271,28 +287,35 @@ namespace GreenVerticalBot.Dialogs
                         !verificationResult.Result)
                     {
                         Message error = await telegramBotClient.SendTextMessageAsync(
-                            chatId: chatId,
+                            chatId: this.Data.ChatId,
                             text: $"Подпись некорректна",
                             cancellationToken: cancellationToken);
-                        this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : invalid signature");
+                        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : invalid signature");
                         return;
                     }
+
+                    var claim = new BotClaim(
+                        type: ClaimTypes.Role,
+                        value: UserRole.RegisteredUser.ToString(),
+                        valueType: null,
+                        issuer: "auto_register_bot",
+                        originalIssuer: null); 
 
                     await this.userManager.AddUserAsync(
                         new()
                         {
-                            TelegramId = update.Message.From.Id,
-                            Role = UserEntity.UserRols.User,
+                            TelegramId = userId,
+                            Claims = new List<BotClaim>() { claim },
                             Status = UserEntity.StatusFormats.Active
                         });
 
                     await telegramBotClient.SendTextMessageAsync(
-                        chatId: chatId,
+                        chatId: this.Data.ChatId,
                         text: $"Регистрация пройдена!",
                         cancellationToken: cancellationToken);
 
-                    this.dialogOrcestrator.SwitchToDialog<WellcomeDialog>(
-                        update.Message.From.Id.ToString(),
+                    await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
+                        userId.ToString(),
                         telegramBotClient,
                         update,
                         cancellationToken,
@@ -307,7 +330,7 @@ namespace GreenVerticalBot.Dialogs
             }
         }
 
-        public override Task ResetState()
+        public override Task ResetStateAsync()
         {
             this.state = RegisterDialogState.Initial;
             return Task.CompletedTask;
