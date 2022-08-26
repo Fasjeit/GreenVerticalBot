@@ -30,7 +30,7 @@ namespace GreenVerticalBot.Dialogs
 
             var stringBuilder = new StringBuilder();
             stringBuilder.AppendLine("Список команд:");
-            stringBuilder.AppendLine("/register Регистрация жильца");
+            stringBuilder.AppendLine("/authenticate Регистрация жильца");
             stringBuilder.AppendLine("/user Просмотр профиля");
             stringBuilder.AppendLine("/authorize Получение доступа к чатам и ресурсам:");
             stringBuilder.AppendLine("/help Вывод списка команд");

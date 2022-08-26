@@ -84,7 +84,7 @@ namespace GreenVerticalBot.Dialogs
                 case AuthorizeDialogState.SelectAuthorizationTarget:
                 {
                     var requestedChat = update?.Message?.Text;
-                    if (!this.Config.ChatInfos.TryGetValue(requestedChat, out var chat))
+                    if (!this.Config.ChatInfos.TryGetValue($"{requestedChat.Substring(1)}", out var chat))
                     {
                         return;
                     }
@@ -110,50 +110,65 @@ namespace GreenVerticalBot.Dialogs
                         return;
                     }
 
-                    // Генерим инвайт линк на 1 использование
-                    // NB. В идеале надо запоминать номер регистрации, id пользователя и инвайт.
-                    // Если такой номер уже был - просто выдавать старый инвайт, а не генерить новый.
-
-                    var inviteLink = await botClient.CreateChatInviteLinkAsync(
-                        new ChatId(
-                            chat.ChatId),
-                        name: StringFormatHelper.GetInviteString(
+                    // проверяем, есть ли инвайт
+                    var userInvite = this.Context.User.Data.Invites.FirstOrDefault(
+                        i => 
+                        i.Id == StringFormatHelper.GetInviteString(
                             update.Message.From.Username,
                             this.Context.TelegramUserId.ToString(),
-                            chat.ChatId),
-                        memberLimit: 1);
+                            chat.ChatId));
 
-                    // Делаем запись в бд
-                    var task = new BotTask()
+                    if (userInvite == null)
                     {
-                        Status = StatusFormats.Approved,
-                        LinkenObject = this.Context.TelegramUserId.ToString(),
-                        Type = TaskType.RequestClaim,
-                        Data = new TaskData() { ChatId = chat.ChatId, InviteLink = inviteLink.InviteLink },
-                    };
-                    await this.taskManager.AddTaskAsync(task);
+                        // Генерим инвайт линк на 1 использование
+                        // NB. В идеале надо запоминать номер регистрации, id пользователя и инвайт.
+                        // Если такой номер уже был - просто выдавать старый инвайт, а не генерить новый.
 
-                    // Перезаписываем, так как там оболочка вокруг словаря
-                    var user = await this.userManager.GetUserByTelegramIdAsync(this.Context.TelegramUserId);
-                    var invites = user.Data.Invites;
-                    invites.Add(
-                        new Invite()
+                        // Создаём задачу в бд
+                        var task = new BotTask()
+                        {
+                            Status = StatusFormats.Approved,
+                            LinkenObject = this.Context.TelegramUserId.ToString(),
+                            Type = TaskType.RequestClaim,
+                        };
+
+                        var inviteLink = await botClient.CreateChatInviteLinkAsync(
+                            new ChatId(
+                                chat.ChatId),
+                            name: StringFormatHelper.GetInviteString(
+                                update.Message.From.Username,
+                                this.Context.TelegramUserId.ToString(),
+                                chat.ChatId),
+                            memberLimit: 1);
+
+                        // ставим линк и делаем запись в бд
+                        task.Data = new TaskData() { ChatId = chat.ChatId, InviteLink = inviteLink.InviteLink };
+                        await this.taskManager.AddTaskAsync(task);
+
+                        // Перезаписываем, так как там оболочка вокруг словаря
+                        var user = await this.userManager.GetUserByTelegramIdAsync(this.Context.TelegramUserId);
+
+                        var invites = user.Data.Invites;
+                        userInvite = new Invite()
                         {
                             Id = $"{inviteLink.Name}",
                             Despription = "Приглашение в общий закрытый чат",
                             Value = $"{inviteLink.InviteLink}"
-                        });
-                    user.Data.Invites = invites;
+                        };
 
-                    await this.userManager.UpdateUserAsync(user);
+                        invites.Add(userInvite);
+                        user.Data.Invites = invites;
 
-                    this.Logger.LogInformation($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : " +
-                        $"new invite link generated [{inviteLink.Name} | value: {inviteLink.InviteLink}]");
+                        await this.userManager.UpdateUserAsync(user);
+
+                        this.Logger.LogInformation($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : " +
+                            $"new invite link generated [{inviteLink.Name} | value: {inviteLink.InviteLink}]");
+                    }
 
                     // Отправляем инвайт
                     Message sentMessage = await botClient.SendTextMessageAsync(
                         chatId: this.Context.TelegramUserId,
-                        text: $"{inviteLink.InviteLink}",
+                        text: $"{userInvite.Value}",
                         cancellationToken: cancellationToken);
 
                     await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(

@@ -28,5 +28,7 @@ namespace GreenVerticalBot.Tasks
         /// <param name="task"></param>
         /// <returns></returns>
         Task UpdateTaskAsync(BotTask task);
+
+        Task <BotTask[]> GetTasksByLinkedObjectAsync(string linkedObjectId);
     }
 }

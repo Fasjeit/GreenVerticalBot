@@ -62,35 +62,35 @@ namespace GreenVerticalBot.Dialogs
                 case RegisterDialogState.Initial:
                 {
                     var user = await this.userManager.GetUserByTelegramIdAsync(this.Context.TelegramUserId);
-                    if (user != null &&
-                        user.Status != UserEntity.StatusFormats.New)
-                    {
-                        await botClient.SendTextMessageAsync(
-                            chatId: this.Context.ChatId,
-                            text:
-                                $"Пользователь уже зарегистрирован.{Environment.NewLine}" +
-                                $"Используйте команду /user для просмотра информации",
-                            parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
-                            cancellationToken: cancellationToken);
+                    //if (user != null &&
+                    //    user.Status != UserEntity.StatusFormats.New)
+                    //{
+                    //    await botClient.SendTextMessageAsync(
+                    //        chatId: this.Context.ChatId,
+                    //        text:
+                    //            $"Пользователь уже зарегистрирован.{Environment.NewLine}" +
+                    //            $"Используйте команду /user для просмотра информации",
+                    //        parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
+                    //        cancellationToken: cancellationToken);
 
-                        await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
-                            user.TelegramId.ToString(),
-                             botClient,
-                             update,
-                             cancellationToken);
-                        return;
-                    }
+                    //    await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
+                    //        user.TelegramId.ToString(),
+                    //         botClient,
+                    //         update,
+                    //         cancellationToken);
+                    //    return;
+                    //}
 
                     var keyboard = new ReplyKeyboardMarkup(new KeyboardButton[][]
                     {
-                        new[]
-                        {
-                            new KeyboardButton("/rosreestr Штамп о регистрации ДДУ в Росреестре"),
-                        },
-                        new[]
-                        {
-                            new KeyboardButton("/etc Прочий документ, подтверждающий владение"),
-                        }
+                        //new[]
+                        //{
+                        //    new KeyboardButton("/rosreestr Штамп о регистрации ДДУ в Росреестре"),
+                        //},
+                        //new[]
+                        //{
+                        //    new KeyboardButton("/etc Прочий документ, подтверждающий владение"),
+                        //}
                     })
                     {
                         OneTimeKeyboard = true,
@@ -113,6 +113,25 @@ namespace GreenVerticalBot.Dialogs
                 {
                     if (update!.Message!.Text!.StartsWith("/rosreestr"))
                     {
+                        if (this.Context?.User?.Claims != null &&
+                            this.Context.User.Claims.Any(c => c.Value == UserRole.RegisteredUser.ToString()))
+                        {
+                            await botClient.SendTextMessageAsync(
+                                chatId: this.Context.ChatId,
+                                text:
+                                    $"Пользователь уже зарегистрирован.{Environment.NewLine}" +
+                                    $"Используйте команду /user для просмотра информации",
+                                parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
+                                cancellationToken: cancellationToken);
+
+                            await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
+                                this.Context.TelegramUserId.ToString(),
+                                 botClient,
+                                 update,
+                                 cancellationToken);
+                            return;
+                        }
+
                         await botClient.SendTextMessageAsync(
                             chatId: this.Context.ChatId,
                             text: $"Приложите файл со штампом регистрации с расширением [.xml].",

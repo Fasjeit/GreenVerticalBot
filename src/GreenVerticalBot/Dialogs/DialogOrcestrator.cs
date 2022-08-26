@@ -130,6 +130,12 @@ namespace GreenVerticalBot.Dialogs
                     // Если сообщение в групповом чате - обрабатываем отдельно в соотв. диалоге
                     if (DialogBase.IsGroupMessage(update))
                     {
+                        // удаляем сообщение, т.к. оно в групповом чате
+                        await dialog.Context.BotClient.DeleteMessageAsync(
+                            dialog.Context.ChatId,
+                            dialog.Context.Update.Message.MessageId,
+                            cancellationToken);
+
                         await this.SwitchToDialogAsync<GroupDialog>
                             ($"{dialog.Context.ChatId}",
                             botClient,

@@ -35,11 +35,25 @@ namespace GreenVerticalBot.Bot
             await botClient.SetMyCommandsAsync(
                 new List<BotCommand>()
                 {
+                },
+                BotCommandScope.Default());
+
+            await botClient.SetMyCommandsAsync(
+                new List<BotCommand>()
+                {
                     new () { Command = @"/authenticate", Description = "Регистрация жильца" },
                     new () { Command = @"/user", Description = "Просмотр профиля" },
                     new () { Command = @"/authorize", Description = "Получение доступа к чатам и ресурсам" },
                     new () { Command = @"/help", Description = "Вывод списка команд" },
-                });
+                }, 
+                BotCommandScope.AllPrivateChats());
+
+            await botClient.SetMyCommandsAsync(
+                new List<BotCommand>()
+                {
+                    new () { Command = @"/authenticate", Description = "Регистрация жильца в боте" },
+                },
+                BotCommandScope.AllGroupChats());
 
             using var cts = new CancellationTokenSource();
             // StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.

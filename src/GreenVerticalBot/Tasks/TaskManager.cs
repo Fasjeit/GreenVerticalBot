@@ -32,6 +32,12 @@ namespace GreenVerticalBot.Tasks
             return taskEntity.ToTask();
         }
 
+        public async Task<BotTask[]> GetTasksByLinkedObjectAsync(string linkedObjectId)
+        {
+            var entities = await this.taskStore.GetTasksByLinkedObjectAsync(linkedObjectId);
+            return entities.Select(e => e.ToTask()).ToArray();
+        }
+
         public async Task UpdateTaskAsync(BotTask task)
         {
             await this.taskStore.UpdateTaskAsync(task.ToTaskEntity());

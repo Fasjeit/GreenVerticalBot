@@ -9,7 +9,7 @@ namespace GreenVerticalBot.Helpers
             string userId,
             string targetChatId)
         {
-            return $"{username}:aka:[{userId}]_to_[{targetChatId}]_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+            return $"[{userId}]_to_[{targetChatId}]";
         }
 
         public static string GetUserIdForLogs(

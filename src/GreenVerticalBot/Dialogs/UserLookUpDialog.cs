@@ -1,5 +1,6 @@
 ﻿using GreenVerticalBot.Authorization;
 using GreenVerticalBot.Configuration;
+using GreenVerticalBot.Tasks;
 using GreenVerticalBot.Users;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -12,17 +13,21 @@ namespace GreenVerticalBot.Dialogs
     internal class UserLookUpDialog : DialogBase
     {
         private IUserManager userManager;
+        private ITaskManager taskManager;
 
         public UserLookUpDialog(
             DialogOrcestrator dialogOrcestrator,
             BotConfiguration config,
             IUserManager userManager,
+            ITaskManager taskManager,
             DialogContext data,
             ILogger<DialogBase> logger)
             : base(dialogOrcestrator, config, userManager, data, logger)
         {
             this.userManager = userManager
                 ?? throw new ArgumentNullException(nameof(userManager));
+            this.taskManager = taskManager
+                ?? throw new ArgumentNullException(nameof(taskManager));
         }
 
         public override Task ResetStateAsync()
@@ -39,6 +44,12 @@ namespace GreenVerticalBot.Dialogs
                 await botClient.SendTextMessageAsync(
                             chatId: this.Context.ChatId,
                             text: $"{JsonConvert.SerializeObject(user, Formatting.Indented)}",
+                            cancellationToken: cancellationToken);
+
+                var tasks = await this.taskManager.GetTasksByLinkedObjectAsync(user.TelegramId.ToString());
+                await botClient.SendTextMessageAsync(
+                            chatId: this.Context.ChatId,
+                            text: $"{JsonConvert.SerializeObject(tasks, Formatting.Indented)}",
                             cancellationToken: cancellationToken);
             }
         }

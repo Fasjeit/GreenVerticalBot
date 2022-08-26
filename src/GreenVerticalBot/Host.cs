@@ -80,16 +80,6 @@ namespace GreenVerticalBot
             using IServiceScope serviceScope = services.CreateScope();
             IServiceProvider provider = serviceScope.ServiceProvider;
 
-            //OperationLogger logger = provider.GetRequiredService<OperationLogger>();
-            //logger.LogOperations($"{scope}-Call 1 .GetRequiredService<OperationLogger>()");
-
-            //Console.WriteLine("...");
-
-            //logger = provider.GetRequiredService<OperationLogger>();
-            //logger.LogOperations($"{scope}-Call 2 .GetRequiredService<OperationLogger>()");
-
-            //Console.WriteLine();
-
             var bot = provider.GetRequiredService<GreenBot>();
             await bot.MainRutine();
         }

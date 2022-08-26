@@ -58,13 +58,6 @@ namespace GreenVerticalBot.Dialogs
                     new TransactionOptions() { IsolationLevel = IsolationLevel.ReadUncommitted },
                     TransactionScopeAsyncFlowOption.Enabled))
                 {
-
-                    // удаляем сообщение, т.к. оно в групповом чате
-                    await this.Context.BotClient.DeleteMessageAsync(
-                        this.Context.ChatId, 
-                        this.Context.Update.Message.MessageId, 
-                        cancellationToken);
-
                     var user = this.Context.User;
                     if (user == null)
                     {
@@ -97,7 +90,7 @@ namespace GreenVerticalBot.Dialogs
                     {
                         Status = StatusFormats.Approved,
                         LinkenObject = this.Context.TelegramUserId.ToString(),
-                        Type = TaskType.RequestClaim,
+                        Type = TaskType.RequestChatClaim,
                         Data = new TaskData() { Claims = claims },
                     };
                     await this.taskManager.AddTaskAsync(task);
