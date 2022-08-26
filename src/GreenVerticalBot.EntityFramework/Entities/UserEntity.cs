@@ -41,7 +41,6 @@ namespace GreenVerticalBot.EntityFramework.Entities
             /// 10 строительный, 9 по адресу
             /// </summary>
             public const string B10_9 = "b10_9";
-
         }
     }
 }

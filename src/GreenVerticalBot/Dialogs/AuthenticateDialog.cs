@@ -1,8 +1,10 @@
 ﻿using GreenVerticalBot.Authorization;
 using GreenVerticalBot.Configuration;
 using GreenVerticalBot.EntityFramework.Entities;
+using GreenVerticalBot.EntityFramework.Entities.Tasks;
 using GreenVerticalBot.Helpers;
 using GreenVerticalBot.RestModels;
+using GreenVerticalBot.Tasks;
 using GreenVerticalBot.Users;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -20,7 +22,7 @@ namespace GreenVerticalBot.Dialogs
     // 77:05:0008007:14033 - участок
     //
 
-    internal class RegisterDialog : DialogBase
+    internal class AuthenticateDialog : DialogBase
     {
         private RegisterDialogState state = RegisterDialogState.Initial;
 
@@ -28,17 +30,22 @@ namespace GreenVerticalBot.Dialogs
 
         private readonly IUserManager userManager;
 
-        public RegisterDialog(
+        private readonly ITaskManager taskManager;
+
+        public AuthenticateDialog(
             IUserManager userManager,
+            ITaskManager taskManager,
             IHttpClientFactory httpClientFactory,
             DialogOrcestrator dialogOrcestrator,
             BotConfiguration config,
             DialogContext data,
-            ILogger<RegisterDialog> logger)
+            ILogger<AuthenticateDialog> logger)
             : base(dialogOrcestrator, config, userManager, data, logger)
         {
             this.userManager = userManager ??
                 throw new ArgumentNullException(nameof(userManager));
+            this.taskManager = taskManager ??
+                throw new ArgumentNullException(nameof(taskManager));
 
             this.svsCLient = httpClientFactory.CreateClient();
         }
@@ -104,18 +111,8 @@ namespace GreenVerticalBot.Dialogs
                 }
                 case RegisterDialogState.SelectRegistrationType:
                 {
-                    //if (update?.CallbackQuery?.Data == null)
-                    //{
-                    //    return;
-                    //}
                     if (update!.Message!.Text!.StartsWith("/rosreestr"))
                     {
-                        //await botClient.AnswerCallbackQueryAsync(
-                        //    update.CallbackQuery.Id,
-                        //    "Приложите файл со штампом регистрации с расширением [.xml].",
-                        //    showAlert: false,
-                        //    cancellationToken: cancellationToken);
-
                         await botClient.SendTextMessageAsync(
                             chatId: this.Context.ChatId,
                             text: $"Приложите файл со штампом регистрации с расширением [.xml].",
@@ -288,14 +285,26 @@ namespace GreenVerticalBot.Dialogs
                         type: ClaimTypes.Role,
                         value: UserRole.RegisteredUser.ToString(),
                         valueType: null,
-                        issuer: "auto_register_bot",
+                        issuer: "green_bot",
                         originalIssuer: null);
+
+                    var claims = new List<BotClaim>() { claim };
+
+                    // Создаём запись об успешной задаче выдаче утверждения
+                    var task = new BotTask()
+                    {
+                        Status = StatusFormats.Approved,
+                        LinkenObject = this.Context.TelegramUserId.ToString(),
+                        Type = TaskType.RequestClaim,
+                        Data = new TaskData() { Claims = claims },
+                    };
+                    await this.taskManager.AddTaskAsync(task);
 
                     await this.userManager.AddUserAsync(
                         new()
                         {
                             TelegramId = userId,
-                            Claims = new List<BotClaim>() { claim },
+                            Claims = claims,
                             Status = UserEntity.StatusFormats.Active
                         });
 

@@ -37,16 +37,15 @@ namespace GreenVerticalBot.EntityFramework.Store.User
                 u => u.TelegramId == telegramUserId);
         }
 
-        public Task UpdateUserAsync(UserEntity entity)
+        public async Task UpdateUserAsync(UserEntity entity)
         {
-            this.userStore.Update(entity);
-            return Task.CompletedTask;
+            await this.userStore.UpdateAsync(entity);
         }
 
         public async Task<long[]> GetActiveUsersTelegramIdAsync(long[] telegramUserId, long thresholdTime)
         {
             return await this.userStore.EntitySetNoTracking.Where(
-                u => 
+                u =>
                     telegramUserId.Contains(u.TelegramId) &&
                     u.LastAccessTime > thresholdTime)
                 .Select(u => u.TelegramId).ToArrayAsync();

@@ -1,4 +1,4 @@
-﻿using GreenVerticalBot.EntityFramework.Entities;
+﻿using GreenVerticalBot.EntityFramework.Entities.Tasks;
 
 namespace GreenVerticalBot.EntityFramework.Store.Tasks
 {
@@ -14,5 +14,19 @@ namespace GreenVerticalBot.EntityFramework.Store.Tasks
         /// </param>
         /// <returns></returns>
         Task AddTaskAsync(TaskEntity entity);
+
+        /// <summary>
+        /// Получить информацию о задаче
+        /// </summary>
+        /// <param name="taskId"></param>
+        /// <returns></returns>
+        Task<TaskEntity?> GetTaskAsync(string taskId);
+
+        /// <summary>
+        /// Изменить данные пользователя
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        Task UpdateTaskAsync(TaskEntity entity);
     }
 }

@@ -1,9 +1,4 @@
-﻿using GreenVerticalBot.EntityFramework.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using GreenVerticalBot.EntityFramework.Entities.Tasks;
 
 namespace GreenVerticalBot.EntityFramework.Store.Tasks
 {
@@ -14,6 +9,16 @@ namespace GreenVerticalBot.EntityFramework.Store.Tasks
         public Task AddTaskAsync(TaskEntity entity)
         {
             return Task.CompletedTask;
+        }
+
+        public Task<TaskEntity?> GetTaskAsync(string taskId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task UpdateTaskAsync(TaskEntity entity)
+        {
+            throw new NotImplementedException();
         }
     }
 }

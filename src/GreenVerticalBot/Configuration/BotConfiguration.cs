@@ -1,4 +1,6 @@
-﻿namespace GreenVerticalBot.Configuration
+﻿using GreenVerticalBot.Authorization;
+
+namespace GreenVerticalBot.Configuration
 {
     /// <summary>
     /// Конфигурация бота
@@ -10,11 +12,11 @@
         /// </summary>
         public string BotToken { get; set; }
 
-        /// <summary>
-        /// Идентификатор закрытого чата, в который бот будет присылать инвайты.
-        /// Бот должен иметь права адмна в чате
-        /// </summary>
-        public long PrivateChatId { get; set; }
+        ///// <summary>
+        ///// Идентификатор закрытого чата, в который бот будет присылать инвайты.
+        ///// Бот должен иметь права адмна в чате
+        ///// </summary>
+        //public long PrivateChatId { get; set; }
 
         /// <summary>
         /// Строка подключения к бд
@@ -23,25 +25,13 @@
 
         public Dictionary<string, List<string>> ExtraClaims { get; set; }
 
-        //public BotConfiguration()
-        //{
-        //}
+        public Dictionary<string, ChatInfo> ChatInfos { get; set; }
+    }
 
-        ///// <summary>
-        ///// Зачитывает конфиг из локального json файла
-        ///// </summary>
-        ///// <returns></returns>
-        //public static async Task<BotConfiguration> GetConfigAsync()
-        //{
-        //    //var options = new JsonSerializerOptions()
-        //    //{
-        //    //    NumberHandling = JsonNumberHandling.AllowReadingFromString |
-        //    //    JsonNumberHandling.WriteAsString
-        //    //};
-
-        //    return JsonConvert.DeserializeObject<BotConfiguration>(
-        //        await File.ReadAllTextAsync(
-        //            Path.Combine("Configuration", "config.json")));
-        //}
+    public class ChatInfo
+    {
+        public string FriendlyName { get; set; } = string.Empty;
+        public string ChatId { get; set; } = string.Empty;
+        public string RequredClaim { get; set; } = UserRole.RegisteredUser.ToString();
     }
 }

@@ -1,8 +1,9 @@
 ﻿namespace GreenVerticalBot.EntityFramework
 {
-    using System.Diagnostics.CodeAnalysis;
     using GreenVerticalBot.EntityFramework.Entities;
+    using GreenVerticalBot.EntityFramework.Entities.Tasks;
     using Microsoft.EntityFrameworkCore;
+    using System.Diagnostics.CodeAnalysis;
 
     public class GreenVerticalBotContext :
         DbContext

@@ -97,8 +97,9 @@ namespace GreenVerticalBot.Dialogs
             this.Context.Update = update;
             this.Context.User = user;
             this.Context.TelegramUserId = userId;
+            this.Context.ChatId = update?.Message?.Chat?.Id;
             this.Context.CancellationToken = cancellationToken;
-            this.Context.Claims = user?.Claims;
+            this.Context.Claims = user?.Claims ?? new List<Authorization.BotClaim>();
         }
 
         public static long GetUserId(Update update)
@@ -112,5 +113,18 @@ namespace GreenVerticalBot.Dialogs
             }
             return (long)userId;
         }
+
+        public static long GetDialogId(Update update)
+        {
+            var chatId =
+                update?.Message?.Chat.Id;
+            if (chatId == null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(update));
+            }
+            return (long)chatId;
+        }
+
+        public static bool IsGroupMessage(Update update) => update?.Message?.Chat?.Id != update?.Message?.From?.Id;
     }
 }

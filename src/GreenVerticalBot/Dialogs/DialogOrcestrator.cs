@@ -73,8 +73,7 @@ namespace GreenVerticalBot.Dialogs
                 return;
             }
 
-            // В качестве идентификатора используем идентификатор пользователя
-            var dialogId = DialogBase.GetUserId(update).ToString();
+            var dialogId = DialogBase.GetDialogId(update).ToString();
 
             try
             {
@@ -126,9 +125,26 @@ namespace GreenVerticalBot.Dialogs
                         return;
                     }
 
-                    if (update?.Message?.Text == "/register")
+                    ///
+
+                    // Если сообщение в групповом чате - обрабатываем отдельно в соотв. диалоге
+                    if (DialogBase.IsGroupMessage(update))
                     {
-                        await this.SwitchToDialogAsync<RegisterDialog>
+                        await this.SwitchToDialogAsync<GroupDialog>
+                            ($"{dialog.Context.ChatId}",
+                            botClient,
+                            update,
+                            cancellationToken,
+                            true);
+                        return;
+                    }
+
+
+                    ///
+
+                    if (update?.Message?.Text == "/authenticate")
+                    {
+                        await this.SwitchToDialogAsync<AuthenticateDialog>
                             ($"{dialog.Context.ChatId}",
                             botClient,
                             update,
@@ -169,6 +185,16 @@ namespace GreenVerticalBot.Dialogs
                     else if (update?.Message?.Text == "/a_userlookup")
                     {
                         await this.SwitchToDialogAsync<UserLookUpDialog>
+                            ($"{dialog.Context.ChatId}",
+                            botClient,
+                            update,
+                            cancellationToken,
+                            true);
+                        return;
+                    }
+                    else if (update?.Message?.Text == "/a_status")
+                    {
+                        await this.SwitchToDialogAsync<ShowStatusDialog>
                             ($"{dialog.Context.ChatId}",
                             botClient,
                             update,

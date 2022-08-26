@@ -1,9 +1,9 @@
 ﻿namespace GreenVerticalBot.EntityFramework.Store
 {
+    using Microsoft.EntityFrameworkCore;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
-    using Microsoft.EntityFrameworkCore;
 
     /// <summary>
     /// Класс предоставляет базовый функционал по работе с сущностями EF.
@@ -148,14 +148,14 @@
         /// <remarks>
         /// Создаём tracking сущность, заполняем ей поля на основе переданной noTracking сущности
         /// </remarks>
-        public virtual void Update(TEntity entity)
+        public virtual async Task UpdateAsync(TEntity entity)
         {
             var existedEntity = this.DbEntitySet.Find(entity.Id);
             if (existedEntity != null)
             {
                 this.Context.Entry(existedEntity).CurrentValues.SetValues(entity);
             }
-            this.Context.SaveChangesAsync();
+            await this.Context.SaveChangesAsync();
         }
     }
 }

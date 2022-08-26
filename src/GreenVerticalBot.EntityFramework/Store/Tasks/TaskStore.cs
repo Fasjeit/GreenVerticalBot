@@ -1,4 +1,4 @@
-﻿using GreenVerticalBot.EntityFramework.Entities;
+﻿using GreenVerticalBot.EntityFramework.Entities.Tasks;
 
 namespace GreenVerticalBot.EntityFramework.Store.Tasks
 {
@@ -23,6 +23,16 @@ namespace GreenVerticalBot.EntityFramework.Store.Tasks
 
             this.tasksStore.Create(entity);
             await this.Context.SaveChangesAsync();
+        }
+
+        public async Task<TaskEntity?> GetTaskAsync(string taskId)
+        {
+            return await this.tasksStore.GetByIdAsync(taskId);
+        }
+
+        public async Task UpdateTaskAsync(TaskEntity entity)
+        {
+            await this.tasksStore.UpdateAsync(entity);
         }
     }
 }

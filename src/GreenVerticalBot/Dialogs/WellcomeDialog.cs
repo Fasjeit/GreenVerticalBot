@@ -2,6 +2,7 @@
 using GreenVerticalBot.Configuration;
 using GreenVerticalBot.Users;
 using Microsoft.Extensions.Logging;
+using System.Net.NetworkInformation;
 using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -39,6 +40,7 @@ namespace GreenVerticalBot.Dialogs
                 stringBuilder.AppendLine();
                 stringBuilder.AppendLine($"Команды администратора:");
                 stringBuilder.AppendLine("/a_userlookup Вывод имени пользователя по id telegram");
+                stringBuilder.AppendLine("/a_status Вывод статуса бота");
             }
 
             // Выводим привественное сообщение

@@ -5,6 +5,7 @@ using GreenVerticalBot.EntityFramework;
 using GreenVerticalBot.EntityFramework.Store.Tasks;
 using GreenVerticalBot.EntityFramework.Store.User;
 using GreenVerticalBot.Monitoring;
+using GreenVerticalBot.Tasks;
 using GreenVerticalBot.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -53,12 +54,15 @@ namespace GreenVerticalBot
                 services.AddSingleton<DialogOrcestrator>();
 
                 services.AddScoped<WellcomeDialog>();
-                services.AddScoped<RegisterDialog>();
+                services.AddScoped<AuthenticateDialog>();
                 services.AddScoped<UserInfoDialog>();
                 services.AddScoped<AuthorizeDialog>();
                 services.AddScoped<UserLookUpDialog>();
+                services.AddScoped<GroupDialog>();
+                services.AddScoped<ShowStatusDialog>();
 
                 services.AddScoped<IUserManager, UserManager>();
+                services.AddScoped<ITaskManager, TaskManager>();
 
                 services.AddHostedService<ScopeMonitor>();
             });
