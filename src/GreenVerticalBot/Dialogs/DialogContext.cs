@@ -20,5 +20,7 @@ namespace GreenVerticalBot.Dialogs
         public User? User { get; set; }
         public List<BotClaim> Claims { get; set; } = new List<BotClaim>();
         public bool IsGroupMessage => this.ChatId == this.TelegramUserId;
+
+        public Dictionary<string, string> ContextData = new Dictionary<string, string>();
     }
 }

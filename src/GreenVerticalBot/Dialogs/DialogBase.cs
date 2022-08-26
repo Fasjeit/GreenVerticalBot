@@ -1,6 +1,8 @@
-﻿using GreenVerticalBot.Configuration;
+﻿using GreenVerticalBot.Authorization;
+using GreenVerticalBot.Configuration;
 using GreenVerticalBot.Users;
 using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 using Telegram.Bot;
 using Update = Telegram.Bot.Types.Update;
 
@@ -100,6 +102,23 @@ namespace GreenVerticalBot.Dialogs
             this.Context.ChatId = update?.Message?.Chat?.Id;
             this.Context.CancellationToken = cancellationToken;
             this.Context.Claims = user?.Claims ?? new List<Authorization.BotClaim>();
+
+            // Выставляем админсткие Claims из конфига
+            var userid = this.Context.TelegramUserId.ToString();
+            if (this.Config?.ExtraClaims != null &&
+                this.Config.ExtraClaims.Keys.Contains(userid))
+            {
+                foreach (var claim in this.Config.ExtraClaims[userid])
+                {
+                    Context.Claims.Add(
+                        new BotClaim(
+                            type: ClaimTypes.Role,
+                            value: claim,
+                            valueType: null,
+                            issuer: "config",
+                            originalIssuer: null));
+                }
+            }
         }
 
         public static long GetUserId(Update update)

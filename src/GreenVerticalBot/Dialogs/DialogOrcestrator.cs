@@ -339,23 +339,6 @@ namespace GreenVerticalBot.Dialogs
             Type dialogType,
             DialogContext context)
         {
-            // Выставляем админсткие Claims из конфига
-            var userid = context.TelegramUserId.ToString();
-            if (this.config?.ExtraClaims != null &&
-                this.config.ExtraClaims.Keys.Contains(userid))
-            {
-                foreach (var claim in this.config.ExtraClaims[userid])
-                {
-                    context.Claims.Add(
-                        new BotClaim(
-                            type: ClaimTypes.Role,
-                            value: claim,
-                            valueType: null,
-                            issuer: "config",
-                            originalIssuer: null));
-                }
-            }
-
             // Проверка авторизации
             bool isAuthorized = true;
             object[] attrs = dialogType.GetCustomAttributes(true);

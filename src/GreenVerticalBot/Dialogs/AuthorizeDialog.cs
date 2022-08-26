@@ -75,7 +75,7 @@ namespace GreenVerticalBot.Dialogs
                         chatId: update.Message.Chat.Id,
                         text: sb.ToString(),
                         parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
-                        replyMarkup: keyboard,
+                        //replyMarkup: keyboard,
                         cancellationToken: cancellationToken);
 
                     this.state = AuthorizeDialogState.SelectAuthorizationTarget;
@@ -128,7 +128,7 @@ namespace GreenVerticalBot.Dialogs
                         var task = new BotTask()
                         {
                             Status = StatusFormats.Approved,
-                            LinkenObject = this.Context.TelegramUserId.ToString(),
+                            LinkedObject = this.Context.TelegramUserId.ToString(),
                             Type = TaskType.RequestClaim,
                         };
 

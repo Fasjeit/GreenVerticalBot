@@ -62,35 +62,17 @@ namespace GreenVerticalBot.Dialogs
                 case RegisterDialogState.Initial:
                 {
                     var user = await this.userManager.GetUserByTelegramIdAsync(this.Context.TelegramUserId);
-                    //if (user != null &&
-                    //    user.Status != UserEntity.StatusFormats.New)
-                    //{
-                    //    await botClient.SendTextMessageAsync(
-                    //        chatId: this.Context.ChatId,
-                    //        text:
-                    //            $"Пользователь уже зарегистрирован.{Environment.NewLine}" +
-                    //            $"Используйте команду /user для просмотра информации",
-                    //        parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
-                    //        cancellationToken: cancellationToken);
-
-                    //    await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
-                    //        user.TelegramId.ToString(),
-                    //         botClient,
-                    //         update,
-                    //         cancellationToken);
-                    //    return;
-                    //}
 
                     var keyboard = new ReplyKeyboardMarkup(new KeyboardButton[][]
                     {
-                        //new[]
-                        //{
-                        //    new KeyboardButton("/rosreestr Штамп о регистрации ДДУ в Росреестре"),
-                        //},
-                        //new[]
-                        //{
-                        //    new KeyboardButton("/etc Прочий документ, подтверждающий владение"),
-                        //}
+                        new[]
+                        {
+                            new KeyboardButton("/rosreestr Штамп о регистрации ДДУ в Росреестре"),
+                        },
+                        new[]
+                        {
+                            new KeyboardButton("/etc Прочий документ, подтверждающий владение"),
+                        }
                     })
                     {
                         OneTimeKeyboard = true,
@@ -101,10 +83,10 @@ namespace GreenVerticalBot.Dialogs
                         chatId: this.Context.ChatId,
                         text:
                             $"Выберите способы регистации:{Environment.NewLine}{Environment.NewLine}" +
-                            $"* /rosteestr Штамп о регистрации ДДУ в Росреестре{Environment.NewLine}" +
+                            $"* /rosreestr Штамп о регистрации ДДУ в Росреестре{Environment.NewLine}" +
                             $"* /etc Прочий документ, подтверждающий владение",
                         parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
-                        replyMarkup: keyboard,
+                        //replyMarkup: keyboard,
                         cancellationToken: cancellationToken);
                     this.state = RegisterDialogState.SelectRegistrationType;
                     return;
@@ -139,6 +121,15 @@ namespace GreenVerticalBot.Dialogs
                             replyMarkup: new ReplyKeyboardRemove());
                         this.state = RegisterDialogState.RegisterWithRosreestrDduStampStart;
                     }
+                    //else if (update!.Message!.Text!.StartsWith("/etc"))
+                    //{
+                    //    await botClient.SendTextMessageAsync(
+                    //        chatId: this.Context.ChatId,
+                    //        text: $"Приложите файл с подтверждающим документов (дду, акт приёма-передачи, выписку из егрн, итд).",
+                    //        cancellationToken: cancellationToken,
+                    //        replyMarkup: new ReplyKeyboardRemove());
+                    //    this.state = RegisterDialogState.EtcStart;
+                    //}
                     else
                     {
                         await botClient.SendTextMessageAsync(
@@ -313,8 +304,8 @@ namespace GreenVerticalBot.Dialogs
                     var task = new BotTask()
                     {
                         Status = StatusFormats.Approved,
-                        LinkenObject = this.Context.TelegramUserId.ToString(),
-                        Type = TaskType.RequestClaim,
+                        LinkedObject = this.Context.TelegramUserId.ToString(),
+                        Type = TaskType.RequestChatAccess,
                         Data = new TaskData() { Claims = claims },
                     };
                     await this.taskManager.AddTaskAsync(task);
@@ -341,9 +332,69 @@ namespace GreenVerticalBot.Dialogs
 
                     return;
                 }
+                //case RegisterDialogState.EtcStart:
+                //{
+                //    await botClient.SendTextMessageAsync(
+                //            chatId: this.Context.ChatId,
+                //            text: $".",
+                //            cancellationToken: cancellationToken);
+                //    return;
+                //}
+                //case RegisterDialogState.EtcLoadFile:
+                //{
+                //    var message = update.Message;
+
+                //    // игнорируем обработку любых сообщений, кроме вложенных файлов
+                //    if (update.Message?.Document is not { } document)
+                //    {
+                //        await botClient.SendTextMessageAsync(
+                //            chatId: this.Context.ChatId,
+                //            text: $"Приложите файл со штампом регистрации с расширением [.xml].",
+                //            cancellationToken: cancellationToken);
+
+                //        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : not a file message");
+                //        return;
+                //    }
+                //    var documentSize = message.Document.FileSize;
+                //    if (documentSize > 100000)
+                //    {
+                //        Message error = await botClient.SendTextMessageAsync(
+                //           chatId: this.Context.ChatId,
+                //           text: $"Слишком большой файл",
+                //           cancellationToken: cancellationToken);
+                //        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : too big file [{documentSize}]");
+                //        return;
+                //    }
+
+                //    var fileId = message.Document.FileId;
+                //    var fileInfo = await botClient.GetFileAsync(fileId);
+                //    var filePath = fileInfo.FilePath;
+
+                //    // Создаём поток для чтения в память
+                //    using var stream = new MemoryStream();
+
+                //    // Зачитываем файл в память
+                //    await botClient.DownloadFileAsync(
+                //        filePath: filePath,
+                //        destination: stream);
+
+                //    // Создаём задачу на подтверждение
+                //    var task = new BotTask() 
+                //    {
+                //        Status = StatusFormats.Created,
+                //        LinkedObject = this.Context.TelegramUserId.ToString(),
+                //    };
+                //    return;
+                //}
                 default:
                 {
-                    throw new Exception();
+                    await botClient.SendTextMessageAsync(
+                            chatId: userId,
+                            text: $"Данный способ регистрации временно не поддерживается",
+                            cancellationToken: cancellationToken,
+                            replyMarkup: new ReplyKeyboardRemove());
+                    this.state = RegisterDialogState.Initial;
+                    return;
                 }
             }
         }
@@ -359,9 +410,9 @@ namespace GreenVerticalBot.Dialogs
     {
         Initial = 0,
         SelectRegistrationType,
-
-        //RegisterWithRosreestrDduStampInitial,
-        RegisterWithRosreestrDduStampStart
+        RegisterWithRosreestrDduStampStart,
+        EtcStart,
+        EtcLoadFile,
     }
 
     internal enum AuthenticationType

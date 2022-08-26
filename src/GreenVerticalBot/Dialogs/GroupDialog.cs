@@ -39,6 +39,17 @@ namespace GreenVerticalBot.Dialogs
 
         internal override async Task ProcessUpdateCoreAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
+            if (update!.Message!.Text!.StartsWith("/chatId"))
+            {
+                if (this.Context.Claims.HasRole(UserRole.Admin))
+                {
+                    await botClient.SendTextMessageAsync(
+                            chatId: this.Context.TelegramUserId,
+                            text: $"ChatId is [{this.Context.ChatId}]",
+                            cancellationToken: cancellationToken);
+                }
+                return;
+            }
             if (update!.Message!.Text!.StartsWith("/authenticate"))
             {
                 var claim = new BotClaim(
@@ -89,7 +100,7 @@ namespace GreenVerticalBot.Dialogs
                     var task = new BotTask()
                     {
                         Status = StatusFormats.Approved,
-                        LinkenObject = this.Context.TelegramUserId.ToString(),
+                        LinkedObject = this.Context.TelegramUserId.ToString(),
                         Type = TaskType.RequestChatClaim,
                         Data = new TaskData() { Claims = claims },
                     };

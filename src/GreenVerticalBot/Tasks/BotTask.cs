@@ -12,7 +12,7 @@ namespace GreenVerticalBot.Tasks
         public DateTimeOffset UpdateTime { get; set; } = DateTimeOffset.UtcNow;
         public TaskData Data { get; set; } = new TaskData();
         public string Status { get; set; } = StatusFormats.Created;
-        public string? LinkenObject { get; set; }
+        public string? LinkedObject { get; set; }
     }
 
     internal static class TaskExtensions
@@ -27,7 +27,7 @@ namespace GreenVerticalBot.Tasks
                 UpdateTime = task.UpdateTime.ToUnixTimeSeconds(),
                 Data = JsonConvert.SerializeObject(task.Data),
                 Status = task.Status,
-                LinkenObject = task.LinkenObject,
+                LinkedObject = task.LinkedObject,
             };
         }
 
@@ -41,7 +41,7 @@ namespace GreenVerticalBot.Tasks
                 UpdateTime = DateTimeOffset.FromUnixTimeSeconds(taskEntity.UpdateTime),
                 Data = JsonConvert.DeserializeObject<TaskData>(taskEntity.Data),
                 Status = taskEntity.Status,
-                LinkenObject = taskEntity.LinkenObject,
+                LinkedObject = taskEntity.LinkedObject,
             };
         }
     }
