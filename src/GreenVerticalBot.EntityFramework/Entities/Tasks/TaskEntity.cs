@@ -14,6 +14,6 @@ namespace GreenVerticalBot.EntityFramework.Entities.Tasks
         public long UpdateTime { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         public string Data { get; set; } = "{}";
         public string Status { get; set; } = StatusFormats.Created;
-        public string? LinkenObject { get; set; }
+        public string? LinkedObject { get; set; }
     }
 }

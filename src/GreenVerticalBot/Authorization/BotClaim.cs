@@ -17,5 +17,15 @@ namespace GreenVerticalBot.Authorization
                 c => c.Type == ClaimTypes.Role &&
                 c.Value == role.ToString());
         }
+
+        public static bool HasAllRolles(this List<BotClaim> claims, List<UserRole> requredRoles)
+        {
+            return requredRoles.All(
+                rr => 
+                    claims.Any(
+                        c => 
+                            c.Type == ClaimTypes.Role &&
+                            c.Value == rr.ToString()));
+        }
     }
 }

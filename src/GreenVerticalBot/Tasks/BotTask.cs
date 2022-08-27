@@ -1,5 +1,5 @@
 ﻿using GreenVerticalBot.EntityFramework.Entities.Tasks;
-using GreenVerticalBot.Users;
+using GreenVerticalBot.Tasks.Data;
 using Newtonsoft.Json;
 
 namespace GreenVerticalBot.Tasks

@@ -1,4 +1,6 @@
 ﻿using GreenVerticalBot.Authorization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace GreenVerticalBot.Configuration
 {
@@ -28,10 +30,12 @@ namespace GreenVerticalBot.Configuration
         public Dictionary<string, ChatInfo> ChatInfos { get; set; }
     }
 
-    public class ChatInfo
+    internal class ChatInfo
     {
         public string FriendlyName { get; set; } = string.Empty;
         public string ChatId { get; set; } = string.Empty;
-        public string RequredClaim { get; set; } = UserRole.RegisteredUser.ToString();
+
+        [JsonConverter(typeof(StringEnumConverter))]
+        public List<UserRole> RequredClaims { get; set; } = new List<UserRole>() { };
     }
 }

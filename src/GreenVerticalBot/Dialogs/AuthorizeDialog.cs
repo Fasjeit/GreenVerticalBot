@@ -3,6 +3,7 @@ using GreenVerticalBot.Configuration;
 using GreenVerticalBot.EntityFramework.Entities.Tasks;
 using GreenVerticalBot.Helpers;
 using GreenVerticalBot.Tasks;
+using GreenVerticalBot.Tasks.Data;
 using GreenVerticalBot.Users;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
@@ -90,10 +91,10 @@ namespace GreenVerticalBot.Dialogs
                     }
 
                     // проверяем права
-                    if (!this.Context.Claims.Any(c => c.Value == chat.RequredClaim))
+                    if (!this.Context.Claims.HasAllRolles(chat.RequredClaims))
                     {
                         this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
-                            $": nathorized access to [{chat.ChatId}]");
+                            $": unathorized access to [{chat.ChatId}]");
 
                         await botClient.SendTextMessageAsync(
                             chatId: this.Context.ChatId,
@@ -142,7 +143,7 @@ namespace GreenVerticalBot.Dialogs
                             memberLimit: 1);
 
                         // ставим линк и делаем запись в бд
-                        task.Data = new TaskData() { ChatId = chat.ChatId, InviteLink = inviteLink.InviteLink };
+                        task.Data = new RequestChatAccessData() { ChatId = chat.ChatId, InviteLink = inviteLink.InviteLink };
                         await this.taskManager.AddTaskAsync(task);
 
                         // Перезаписываем, так как там оболочка вокруг словаря

@@ -5,6 +5,7 @@ using GreenVerticalBot.EntityFramework.Entities.Tasks;
 using GreenVerticalBot.Helpers;
 using GreenVerticalBot.RestModels;
 using GreenVerticalBot.Tasks;
+using GreenVerticalBot.Tasks.Data;
 using GreenVerticalBot.Users;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -305,8 +306,8 @@ namespace GreenVerticalBot.Dialogs
                     {
                         Status = StatusFormats.Approved,
                         LinkedObject = this.Context.TelegramUserId.ToString(),
-                        Type = TaskType.RequestChatAccess,
-                        Data = new TaskData() { Claims = claims },
+                        Type = TaskType.RequestClaim,
+                        Data = new RequestClaimTaskData() { Claims = claims },
                     };
                     await this.taskManager.AddTaskAsync(task);
 

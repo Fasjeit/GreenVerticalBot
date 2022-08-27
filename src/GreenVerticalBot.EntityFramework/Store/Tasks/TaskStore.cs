@@ -34,5 +34,10 @@ namespace GreenVerticalBot.EntityFramework.Store.Tasks
         {
             await this.tasksStore.UpdateAsync(entity);
         }
+
+        public Task<TaskEntity[]> GetTasksByLinkedObjectAsync(string linkedObjectId)
+        {
+            return Task.FromResult(this.tasksStore.EntitySetNoTracking.Where(t => t.LinkedObject == linkedObjectId).ToArray());
+        }
     }
 }

@@ -3,6 +3,7 @@ using GreenVerticalBot.Configuration;
 using GreenVerticalBot.EntityFramework.Entities;
 using GreenVerticalBot.EntityFramework.Entities.Tasks;
 using GreenVerticalBot.Tasks;
+using GreenVerticalBot.Tasks.Data;
 using GreenVerticalBot.Users;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
@@ -52,15 +53,24 @@ namespace GreenVerticalBot.Dialogs
             }
             if (update!.Message!.Text!.StartsWith("/authenticate"))
             {
-                var claim = new BotClaim(
+
+                var chatId = this.Context.ChatId;
+
+                // Получаем список ролей, которые надо выдать
+                var chatInfo = this.Config.ChatInfos.FirstOrDefault(ci => ci.Value.ChatId == chatId.ToString());
+                var requiredRoles = chatInfo.Value.RequredClaims;
+
+                var claims = new List<BotClaim>();
+                foreach (var requiredRole in requiredRoles)
+                {
+                    var claim = new BotClaim(
                         type: ClaimTypes.Role,
-                        value: UserRole.RegisteredUser.ToString(),
+                        value: requiredRole.ToString(),
                         valueType: null,
                         issuer: "green_bot",
                         originalIssuer: null);
-
-                var claims = new List<BotClaim>() { claim };
-
+                    claims.Add(claim);
+                }
 
                 // TransactionScopeAsyncFlowOption.Enabled - для async
                 // ReadUncommitted - для избавления от дедлоков базы
@@ -82,18 +92,29 @@ namespace GreenVerticalBot.Dialogs
                     }
                     else
                     {
-                        if (user.Claims.Any(c => c.Value == claim.Value))
+                        bool newClaims = false;
+                        user = await this.userManager.GetUserByTelegramIdAsync(this.Context.TelegramUserId);
+                        foreach (var claim in claims)
+                        {
+                            // добавляем только новые утрверждения
+                            if (!user.Claims.Any(c => c.Value == claim.Value))
+                            {
+                                user.Claims.Add(claim);
+                                newClaims = true;
+                            }
+                        }
+                        if (newClaims)
+                        {
+                            await this.userManager.UpdateUserAsync(user);
+                        }
+                        else
                         {
                             await botClient.SendTextMessageAsync(
                                 chatId: user.TelegramId,
                                 text: $"Права уже были получен!{Environment.NewLine}Используйте команда /user для просмотра профиля",
                                 cancellationToken: cancellationToken);
-
                             return;
                         }
-                        user = await this.userManager.GetUserByTelegramIdAsync(this.Context.TelegramUserId);
-                        user.Claims.AddRange(claims);
-                        await this.userManager.UpdateUserAsync(user);
                     }
 
                     // Создаём запись об успешной задаче выдаче утверждения
@@ -101,8 +122,8 @@ namespace GreenVerticalBot.Dialogs
                     {
                         Status = StatusFormats.Approved,
                         LinkedObject = this.Context.TelegramUserId.ToString(),
-                        Type = TaskType.RequestChatClaim,
-                        Data = new TaskData() { Claims = claims },
+                        Type = TaskType.RequestClaim,
+                        Data = new RequestClaimTaskData() { Claims = claims },
                     };
                     await this.taskManager.AddTaskAsync(task);
 
