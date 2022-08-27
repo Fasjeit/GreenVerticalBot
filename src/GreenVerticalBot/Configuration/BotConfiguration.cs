@@ -34,8 +34,6 @@ namespace GreenVerticalBot.Configuration
     {
         public string FriendlyName { get; set; } = string.Empty;
         public string ChatId { get; set; } = string.Empty;
-
-        [JsonConverter(typeof(StringEnumConverter))]
         public List<UserRole> RequredClaims { get; set; } = new List<UserRole>() { };
     }
 }

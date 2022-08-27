@@ -1,19 +1,14 @@
-﻿namespace GreenVerticalBot.EntityFramework.Entities.Tasks
-{
-    public static class TaskType
-    {
-        /// <summary>
-        /// Нетипизированный запрос
-        /// </summary>
-        public const string NoType = "no_type";
-        /// <summary>
-        /// Запрос утрверждения
-        /// </summary>
-        public const string RequestClaim = "request_claim";
+﻿using System.ComponentModel;
 
-        /// <summary>
-        /// Запрос доступа к чату
-        /// </summary>
-        public const string RequestChatAccess = "request_chat_access";
+namespace GreenVerticalBot.EntityFramework.Entities.Tasks
+{
+    public enum TaskType
+    {
+        [Description("")]
+        NoType,
+        [Description("Запрос потверждения роли")]
+        RequestClaim,
+        [Description("Запрос доступа к чату")]
+        RequestChatAccess
     }
 }

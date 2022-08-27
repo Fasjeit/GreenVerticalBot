@@ -7,7 +7,7 @@ namespace GreenVerticalBot.Tasks.Data
 {
     internal class RequestClaimTaskData : TaskData
     {
-        public static string Type = TaskType.RequestClaim;
+        public static TaskType Type = TaskType.RequestClaim;
 
         public List<BotClaim>? Claims
         {
@@ -27,6 +27,40 @@ namespace GreenVerticalBot.Tasks.Data
             set
             {
                 this[nameof(Claims)] = value;
+            }
+        }
+
+        public string? FileProof
+        {
+            get
+            {
+                if (!TryGetValue(nameof(this.FileProof), out var proof) ||
+                    proof == null)
+                {
+                    return null;
+                }
+                return (string)proof;
+            }
+            set
+            {
+                this[nameof(FileProof)] = value;
+            }
+        }
+
+        public string? Reason
+        {
+            get
+            {
+                if (!TryGetValue(nameof(this.Reason), out var reason) ||
+                    reason == null)
+                {
+                    return null;
+                }
+                return (string)reason;
+            }
+            set
+            {
+                this[nameof(Reason)] = value;
             }
         }
     }

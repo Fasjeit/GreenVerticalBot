@@ -188,6 +188,26 @@ namespace GreenVerticalBot.Dialogs
                             true);
                         return;
                     }
+                    else if (update?.Message?.Text == "/task")
+                    {
+                        await this.SwitchToDialogAsync<TasksInfoDialog>
+                            ($"{dialog.Context.ChatId}",
+                            botClient,
+                            update,
+                            cancellationToken,
+                            true);
+                        return;
+                    }
+                    else if (update.Message.Text.StartsWith("/qr"))
+                    {
+                        await this.SwitchToDialogAsync<QrDialog>
+                            ($"{dialog.Context.ChatId}",
+                            botClient,
+                            update,
+                            cancellationToken,
+                            true);
+                        return;
+                    }
                     else if (update?.Message?.Text == "/a_userlookup")
                     {
                         await this.SwitchToDialogAsync<UserLookUpDialog>

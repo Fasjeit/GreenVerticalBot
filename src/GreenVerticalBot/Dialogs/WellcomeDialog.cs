@@ -30,10 +30,15 @@ namespace GreenVerticalBot.Dialogs
 
             var stringBuilder = new StringBuilder();
             stringBuilder.AppendLine("Список команд:");
+            stringBuilder.AppendLine();
             stringBuilder.AppendLine("/authenticate Регистрация жильца");
             stringBuilder.AppendLine("/user Просмотр профиля");
             stringBuilder.AppendLine("/authorize Получение доступа к чатам и ресурсам:");
+            stringBuilder.AppendLine("/task Вывод списка запросов");
             stringBuilder.AppendLine("/help Вывод списка команд");
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine($"Вспомагательные команды:");
+            stringBuilder.AppendLine("/qr Генерация QR кода для строки");
 
             if (this.Context.Claims.HasRole(UserRole.Admin))
             {

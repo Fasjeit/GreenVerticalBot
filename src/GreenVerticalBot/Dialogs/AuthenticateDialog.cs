@@ -122,15 +122,12 @@ namespace GreenVerticalBot.Dialogs
                             replyMarkup: new ReplyKeyboardRemove());
                         this.state = RegisterDialogState.RegisterWithRosreestrDduStampStart;
                     }
-                    //else if (update!.Message!.Text!.StartsWith("/etc"))
-                    //{
-                    //    await botClient.SendTextMessageAsync(
-                    //        chatId: this.Context.ChatId,
-                    //        text: $"Приложите файл с подтверждающим документов (дду, акт приёма-передачи, выписку из егрн, итд).",
-                    //        cancellationToken: cancellationToken,
-                    //        replyMarkup: new ReplyKeyboardRemove());
-                    //    this.state = RegisterDialogState.EtcStart;
-                    //}
+                    else if (update!.Message!.Text!.StartsWith("/etc"))
+                    {
+                        this.state = RegisterDialogState.EtcSelectClaimType;
+                        // step into state
+                        await this.ProcessUpdateCoreAsync(botClient, update, cancellationToken);
+                    }
                     else
                     {
                         await botClient.SendTextMessageAsync(
@@ -333,60 +330,131 @@ namespace GreenVerticalBot.Dialogs
 
                     return;
                 }
-                //case RegisterDialogState.EtcStart:
-                //{
-                //    await botClient.SendTextMessageAsync(
-                //            chatId: this.Context.ChatId,
-                //            text: $".",
-                //            cancellationToken: cancellationToken);
-                //    return;
-                //}
-                //case RegisterDialogState.EtcLoadFile:
-                //{
-                //    var message = update.Message;
+                case RegisterDialogState.EtcSelectClaimType:
+                {
+                    var userTasks = await this.taskManager.GetTasksByLinkedObjectAsync(
+                        this.Context.TelegramUserId.ToString());
+                    if (userTasks.Any(t =>
+                        t.Status == StatusFormats.Created &&
+                        t.Type == TaskType.RequestClaim))
+                    {
+                        await botClient.SendTextMessageAsync(
+                            chatId: userId,
+                            text: $"У вас уже есть активный запрос. {Environment.NewLine}" +
+                            $" Для провреки его статуса используте команду /tasks",
+                            cancellationToken: cancellationToken,
+                            replyMarkup: new ReplyKeyboardRemove());
+                        this.state = RegisterDialogState.Initial;
+                        return;
+                    }
 
-                //    // игнорируем обработку любых сообщений, кроме вложенных файлов
-                //    if (update.Message?.Document is not { } document)
-                //    {
-                //        await botClient.SendTextMessageAsync(
-                //            chatId: this.Context.ChatId,
-                //            text: $"Приложите файл со штампом регистрации с расширением [.xml].",
-                //            cancellationToken: cancellationToken);
+                    var sb = new StringBuilder();
+                    sb.AppendLine("Выберите утрверждеие для получения:");
+                    sb.AppendLine("/k9 - 🏡 житель 9 корпуса (10 строительный)");
 
-                //        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : not a file message");
-                //        return;
-                //    }
-                //    var documentSize = message.Document.FileSize;
-                //    if (documentSize > 100000)
-                //    {
-                //        Message error = await botClient.SendTextMessageAsync(
-                //           chatId: this.Context.ChatId,
-                //           text: $"Слишком большой файл",
-                //           cancellationToken: cancellationToken);
-                //        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : too big file [{documentSize}]");
-                //        return;
-                //    }
+                    await botClient.SendTextMessageAsync(
+                            chatId: this.Context.ChatId,
+                            text: sb.ToString(),
+                            cancellationToken: cancellationToken);
+                    this.state = RegisterDialogState.EtcUploadFilePromt;
+                    return;
+                }
+                case RegisterDialogState.EtcUploadFilePromt:
+                {
 
-                //    var fileId = message.Document.FileId;
-                //    var fileInfo = await botClient.GetFileAsync(fileId);
-                //    var filePath = fileInfo.FilePath;
+                    // parce and rememder requredCLaims
+                    if (update.Message.Text.StartsWith("/k9"))
+                    {
+                        this.Context.ContextData["required_claim"] = UserRole.AccessToB9_ex10Chat.ToString();
+                    }
+                    else
+                    {
+                        return;
+                    }
 
-                //    // Создаём поток для чтения в память
-                //    using var stream = new MemoryStream();
+                    await botClient.SendTextMessageAsync(
+                            chatId: this.Context.ChatId,
+                            text: $"Приложите файл (дду, выписка из ЕГРН, прочий документ на собственность).",
+                            cancellationToken: cancellationToken);
 
-                //    // Зачитываем файл в память
-                //    await botClient.DownloadFileAsync(
-                //        filePath: filePath,
-                //        destination: stream);
+                    this.state = RegisterDialogState.EtcLoadFile;
+                    return;
+                }
+                case RegisterDialogState.EtcLoadFile:
+                {
+                    var message = update.Message;
 
-                //    // Создаём задачу на подтверждение
-                //    var task = new BotTask() 
-                //    {
-                //        Status = StatusFormats.Created,
-                //        LinkedObject = this.Context.TelegramUserId.ToString(),
-                //    };
-                //    return;
-                //}
+                    // игнорируем обработку любых сообщений, кроме вложенных файлов
+                    if (update.Message?.Document is not { } document)
+                    {
+                        await botClient.SendTextMessageAsync(
+                            chatId: this.Context.ChatId,
+                            text: $"Приложите файл (дду, выписка из ЕГРН, прочий документ на собственность).",
+                            cancellationToken: cancellationToken);
+
+                        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : not a file message");
+                        return;
+                    }
+                    var documentSize = message.Document.FileSize;
+                    if (documentSize > 100000)
+                    {
+                        Message error = await botClient.SendTextMessageAsync(
+                           chatId: this.Context.ChatId,
+                           text: $"Слишком большой файл",
+                           cancellationToken: cancellationToken);
+                        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : too big file [{documentSize}]");
+                        return;
+                    }
+
+                    var fileId = message.Document.FileId;
+                    var fileInfo = await botClient.GetFileAsync(fileId);
+                    var filePath = fileInfo.FilePath;
+
+                    // Создаём поток для чтения в память
+                    using var stream = new MemoryStream();
+
+                    // Зачитываем файл в память
+                    await botClient.DownloadFileAsync(
+                        filePath: filePath,
+                        destination: stream);
+                    stream.Position = 0;
+
+                    // Создаём задачу на подтверждение
+                    var task = new BotTask()
+                    {
+                        Status = StatusFormats.Created,
+                        Type = TaskType.RequestClaim,
+                        LinkedObject = this.Context.TelegramUserId.ToString(),
+                        Data = new RequestClaimTaskData()
+                        {
+                            Claims = new List<BotClaim>()
+                            {
+                                new BotClaim(
+                                     type: ClaimTypes.Role,
+                                     value: UserRole.RegisteredUser.ToString(),
+                                     valueType: null,
+                                     issuer: "operator",
+                                     originalIssuer: null),
+                                new BotClaim(
+                                     type: ClaimTypes.Role,
+                                     value: UserRole.AccessToB9_ex10Chat.ToString(),
+                                     valueType: null,
+                                     issuer: "operator",
+                                     originalIssuer: null),
+                            },
+                            FileProof = Convert.ToBase64String(stream.ToArray())
+                        }
+                    };
+                    await this.taskManager.AddTaskAsync(task);
+
+                    await botClient.SendTextMessageAsync(
+                           chatId: userId,
+                           text: $"Запрос зарегистрирован.{Environment.NewLine}" +
+                           $"За стутсусом запроса можно следить через команду /tasks",
+                           cancellationToken: cancellationToken,
+                           replyMarkup: new ReplyKeyboardRemove());
+                    return;
+                }
                 default:
                 {
                     await botClient.SendTextMessageAsync(
@@ -412,7 +480,9 @@ namespace GreenVerticalBot.Dialogs
         Initial = 0,
         SelectRegistrationType,
         RegisterWithRosreestrDduStampStart,
-        EtcStart,
+
+        EtcSelectClaimType,
+        EtcUploadFilePromt,
         EtcLoadFile,
     }
 

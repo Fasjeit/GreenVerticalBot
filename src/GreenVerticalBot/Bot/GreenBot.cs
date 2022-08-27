@@ -44,7 +44,9 @@ namespace GreenVerticalBot.Bot
                     new () { Command = @"/authenticate", Description = "Регистрация жильца" },
                     new () { Command = @"/user", Description = "Просмотр профиля" },
                     new () { Command = @"/authorize", Description = "Получение доступа к чатам и ресурсам" },
+                    new () { Command = @"/task", Description = "Вывод списка запросов" },
                     new () { Command = @"/help", Description = "Вывод списка команд" },
+                    new () { Command = @"/qr", Description = "Генерация QR кода для строки" },
                 }, 
                 BotCommandScope.AllPrivateChats());
 

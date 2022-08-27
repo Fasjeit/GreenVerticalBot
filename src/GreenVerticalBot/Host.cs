@@ -60,6 +60,8 @@ namespace GreenVerticalBot
                 services.AddScoped<UserLookUpDialog>();
                 services.AddScoped<GroupDialog>();
                 services.AddScoped<ShowStatusDialog>();
+                services.AddScoped<TasksInfoDialog>();
+                services.AddScoped<QrDialog>();
 
                 services.AddScoped<IUserManager, UserManager>();
                 services.AddScoped<ITaskManager, TaskManager>();

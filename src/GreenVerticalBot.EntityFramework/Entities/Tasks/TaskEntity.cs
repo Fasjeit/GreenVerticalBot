@@ -9,11 +9,11 @@ namespace GreenVerticalBot.EntityFramework.Entities.Tasks
         }
 
         public string Id { get; set; } = Guid.NewGuid().ToString();
-        public string Type { get; set; } = TaskType.NoType;
+        public string Type { get; set; } = TaskType.NoType.ToString();
         public long CreationTime { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         public long UpdateTime { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         public string Data { get; set; } = "{}";
-        public string Status { get; set; } = StatusFormats.Created;
+        public string Status { get; set; } = StatusFormats.Created.ToString();
         public string? LinkedObject { get; set; }
     }
 }

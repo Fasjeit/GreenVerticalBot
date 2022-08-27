@@ -1,9 +1,14 @@
-﻿namespace GreenVerticalBot.EntityFramework.Entities.Tasks
+﻿using System.ComponentModel;
+
+namespace GreenVerticalBot.EntityFramework.Entities.Tasks
 {
-    public static class StatusFormats
+    public enum StatusFormats
     {
-        public const string Created = "created";
-        public const string Approved = "approved";
-        public const string Declined = "declined";
+        [Description("Создан, ожидает подтверждения")]
+        Created,
+        [Description("Подтверждена")]
+        Approved,
+        [Description("Отклонена")]
+        Declined,
     }
 }

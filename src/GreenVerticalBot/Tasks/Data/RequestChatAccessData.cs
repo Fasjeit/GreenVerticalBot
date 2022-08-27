@@ -9,7 +9,7 @@ namespace GreenVerticalBot.Tasks.Data
 {
     internal class RequestChatAccessData : TaskData
     {
-        public static string Type = TaskType.RequestChatAccess;
+        public static TaskType Type = TaskType.RequestChatAccess;
 
         public string? ChatId
         {
