@@ -188,7 +188,7 @@ namespace GreenVerticalBot.Dialogs
                             true);
                         return;
                     }
-                    else if (update?.Message?.Text == "/task")
+                    else if (update?.Message?.Text == "/tasks")
                     {
                         await this.SwitchToDialogAsync<TasksInfoDialog>
                             ($"{dialog.Context.ChatId}",
@@ -198,7 +198,19 @@ namespace GreenVerticalBot.Dialogs
                             true);
                         return;
                     }
-                    else if (update.Message.Text.StartsWith("/qr"))
+                    else if (update?.Message?.Text == "/approve_task")
+                    {
+                        await this.SwitchToDialogAsync<ApproveDialog>
+                            ($"{dialog.Context.ChatId}",
+                            botClient,
+                            update,
+                            cancellationToken,
+                            true);
+                        return;
+                    }
+                    else if (
+                        update?.Message?.Text != null &&
+                        update.Message.Text.StartsWith("/qr"))
                     {
                         await this.SwitchToDialogAsync<QrDialog>
                             ($"{dialog.Context.ChatId}",

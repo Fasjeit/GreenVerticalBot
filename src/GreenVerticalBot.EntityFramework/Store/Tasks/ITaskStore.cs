@@ -23,6 +23,7 @@ namespace GreenVerticalBot.EntityFramework.Store.Tasks
         Task<TaskEntity?> GetTaskAsync(string taskId);
 
         Task<TaskEntity[]> GetTasksByLinkedObjectAsync(string linkedObjectId);
+        Task<TaskEntity[]> GetToApproveTasks();
 
         /// <summary>
         /// Изменить данные пользователя

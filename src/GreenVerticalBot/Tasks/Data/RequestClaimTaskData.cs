@@ -9,20 +9,29 @@ namespace GreenVerticalBot.Tasks.Data
     {
         public static TaskType Type = TaskType.RequestClaim;
 
+        public RequestClaimTaskData()
+        {
+        }
+
+        public RequestClaimTaskData(Dictionary<string, object> dictionary)
+            : base(dictionary)
+        {
+        }
+
         public List<BotClaim>? Claims
         {
             get
             {
-                if (!TryGetValue(nameof(Claims), out var invites) ||
-                    invites == null)
+                if (!TryGetValue(nameof(Claims), out var claims) ||
+                    claims == null)
                 {
                     return new List<BotClaim>();
                 }
-                if (invites is JArray invitesArray)
+                if (claims is JArray invitesArray)
                 {
-                    invites = invitesArray.ToObject<List<Invite>>();
+                    claims = invitesArray.ToObject<List<BotClaim>>();
                 }
-                return (List<BotClaim>)invites;
+                return (List<BotClaim>)claims;
             }
             set
             {
@@ -30,11 +39,32 @@ namespace GreenVerticalBot.Tasks.Data
             }
         }
 
-        public string? FileProof
+        public List<UserRole>? ShouldBeApprovedByAny
         {
             get
             {
-                if (!TryGetValue(nameof(this.FileProof), out var proof) ||
+                if (!TryGetValue(nameof(ShouldBeApprovedByAny), out var shouldApprovedBy) ||
+                    shouldApprovedBy == null)
+                {
+                    return new List<UserRole>();
+                }
+                if (shouldApprovedBy is JArray shouldApprovedByArray)
+                {
+                    shouldApprovedBy = shouldApprovedByArray.ToObject<List<UserRole>>();
+                }
+                return (List<UserRole>)shouldApprovedBy;
+            }
+            set
+            {
+                this[nameof(ShouldBeApprovedByAny)] = value;
+            }
+        }
+
+        public string? FileProofBase64
+        {
+            get
+            {
+                if (!TryGetValue(nameof(this.FileProofBase64), out var proof) ||
                     proof == null)
                 {
                     return null;
@@ -43,7 +73,24 @@ namespace GreenVerticalBot.Tasks.Data
             }
             set
             {
-                this[nameof(FileProof)] = value;
+                this[nameof(FileProofBase64)] = value;
+            }
+        }
+
+        public string? FileProofName
+        {
+            get
+            {
+                if (!TryGetValue(nameof(this.FileProofName), out var name) ||
+                    name == null)
+                {
+                    return null;
+                }
+                return (string)name;
+            }
+            set
+            {
+                this[nameof(FileProofName)] = value;
             }
         }
 
@@ -63,5 +110,6 @@ namespace GreenVerticalBot.Tasks.Data
                 this[nameof(Reason)] = value;
             }
         }
+
     }
 }

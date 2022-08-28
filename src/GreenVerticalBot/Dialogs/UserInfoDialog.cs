@@ -37,7 +37,7 @@ namespace GreenVerticalBot.Dialogs
 
                 await botClient.SendTextMessageAsync(
                     chatId: update.Message.Chat.Id,
-                    text: $"Пользователь не найден!",
+                    text: $"Пользователь [{this.Context.TelegramUserId}] не найден!",
                     cancellationToken: cancellationToken);
 
                 await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(

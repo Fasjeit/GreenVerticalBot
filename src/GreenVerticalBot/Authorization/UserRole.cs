@@ -13,8 +13,13 @@ namespace GreenVerticalBot.Authorization
         RegisteredUser,
         //[Description("Доступ к общему чату")]
         //AccessToGeneralChat,
-        AccessToB9_ex10Chat,
+        [Description("Права оператора в боте")]
         Operator,
-        OperatorB9_ex10
+
+        [Description("Житель 9-го корпуса")]
+        AccessToB9_ex10Chat,
+
+        [Description("Права оператора доступа к чату 9 корпуса")]
+        OperatorAccessToB9_ex10Chat
     }
 }

@@ -2,11 +2,16 @@
 
 namespace GreenVerticalBot.Authorization
 {
-    internal class BotClaim : Claim
+    internal class BotClaim : Claim, IEquatable<BotClaim>
     {
         public BotClaim(string type, string value, string valueType, string issuer, string originalIssuer) :
             base(type, value, valueType, issuer, originalIssuer)
         { }
+
+        public bool Equals(BotClaim? other)
+        {
+            return this.Value == other?.Value;
+        }
     }
 
     internal static class ClaimsExtensions

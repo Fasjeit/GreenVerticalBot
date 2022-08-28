@@ -40,7 +40,7 @@ namespace GreenVerticalBot.Dialogs
 
         internal override async Task ProcessUpdateCoreAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
-            if (update!.Message!.Text!.StartsWith("/chatId"))
+            if (update?.Message?.Text is string { } text && text.StartsWith("/chatId"))
             {
                 if (this.Context.Claims.HasRole(UserRole.Admin))
                 {
@@ -51,7 +51,7 @@ namespace GreenVerticalBot.Dialogs
                 }
                 return;
             }
-            if (update!.Message!.Text!.StartsWith("/authenticate"))
+            if (update?.Message?.Text is string { } textS && textS.StartsWith("/authenticate"))
             {
 
                 var chatId = this.Context.ChatId;

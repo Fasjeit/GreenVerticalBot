@@ -84,8 +84,8 @@ namespace GreenVerticalBot.Dialogs
                         chatId: this.Context.ChatId,
                         text:
                             $"Выберите способы регистации:{Environment.NewLine}{Environment.NewLine}" +
-                            $"* /rosreestr Штамп о регистрации ДДУ в Росреестре{Environment.NewLine}" +
-                            $"* /etc Прочий документ, подтверждающий владение",
+                            $"* /rosreestr Штамп о регистрации ДДУ в Росреестре [ Житель жк ] {Environment.NewLine}" +
+                            $"* /etc Прочий документ, подтверждающий владение [ Житель жк, Житель корпуса ]",
                         parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
                         //replyMarkup: keyboard,
                         cancellationToken: cancellationToken);
@@ -94,7 +94,7 @@ namespace GreenVerticalBot.Dialogs
                 }
                 case RegisterDialogState.SelectRegistrationType:
                 {
-                    if (update!.Message!.Text!.StartsWith("/rosreestr"))
+                    if (update?.Message?.Text is string{ } text && text.StartsWith("/rosreestr"))
                     {
                         if (this.Context?.User?.Claims != null &&
                             this.Context.User.Claims.Any(c => c.Value == UserRole.RegisteredUser.ToString()))
@@ -193,7 +193,7 @@ namespace GreenVerticalBot.Dialogs
                            chatId: this.Context.ChatId,
                            text: $"Некооректный документ",
                            cancellationToken: cancellationToken);
-                        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : invalid doc, [{exception}]");
+                        this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}]: invalid doc, [{exception}]");
                         return;
                     }
 
@@ -304,7 +304,7 @@ namespace GreenVerticalBot.Dialogs
                         Status = StatusFormats.Approved,
                         LinkedObject = this.Context.TelegramUserId.ToString(),
                         Type = TaskType.RequestClaim,
-                        Data = new RequestClaimTaskData() { Claims = claims },
+                        Data = new RequestClaimTaskData() { Claims = claims, Reason = "Подтверждено ботом" },
                     };
                     await this.taskManager.AddTaskAsync(task);
 
@@ -363,9 +363,10 @@ namespace GreenVerticalBot.Dialogs
                 {
 
                     // parce and rememder requredCLaims
-                    if (update.Message.Text.StartsWith("/k9"))
+                    if (update?.Message?.Text != null &&
+                        update.Message.Text.StartsWith("/k9"))
                     {
-                        this.Context.ContextData["required_claim"] = UserRole.AccessToB9_ex10Chat.ToString();
+                        this.Context.ContextDataString["required_claim"] = UserRole.AccessToB9_ex10Chat.ToString();
                     }
                     else
                     {
@@ -437,12 +438,17 @@ namespace GreenVerticalBot.Dialogs
                                      originalIssuer: null),
                                 new BotClaim(
                                      type: ClaimTypes.Role,
-                                     value: UserRole.AccessToB9_ex10Chat.ToString(),
+                                     value: this.Context.ContextDataString["required_claim"],
                                      valueType: null,
                                      issuer: "operator",
                                      originalIssuer: null),
                             },
-                            FileProof = Convert.ToBase64String(stream.ToArray())
+                            FileProofBase64 = Convert.ToBase64String(stream.ToArray()),
+                            FileProofName = message.Document.FileName,
+                            ShouldBeApprovedByAny = new List<UserRole>()
+                            {
+                                UserRole.OperatorAccessToB9_ex10Chat
+                            }
                         }
                     };
                     await this.taskManager.AddTaskAsync(task);
@@ -453,6 +459,13 @@ namespace GreenVerticalBot.Dialogs
                            $"За стутсусом запроса можно следить через команду /tasks",
                            cancellationToken: cancellationToken,
                            replyMarkup: new ReplyKeyboardRemove());
+
+                    await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
+                        this.Context.ChatId.ToString(), 
+                        botClient, 
+                        update, 
+                        cancellationToken, 
+                        true);
                     return;
                 }
                 default:

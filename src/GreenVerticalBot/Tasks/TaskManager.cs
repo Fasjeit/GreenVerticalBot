@@ -1,4 +1,6 @@
-﻿using GreenVerticalBot.EntityFramework.Store.Tasks;
+﻿using GreenVerticalBot.Authorization;
+using GreenVerticalBot.EntityFramework.Store.Tasks;
+using GreenVerticalBot.Tasks.Data;
 using Microsoft.Extensions.Logging;
 
 namespace GreenVerticalBot.Tasks
@@ -36,6 +38,16 @@ namespace GreenVerticalBot.Tasks
         {
             var entities = await this.taskStore.GetTasksByLinkedObjectAsync(linkedObjectId);
             return entities.Select(e => e.ToTask()).ToArray();
+        }
+
+        public async Task<BotTask[]> GetTasksToApproveByRequredClaimAsync(UserRole[] roles)
+        {
+            var entities = await this.taskStore.GetToApproveTasks();
+            var tasks = entities.Select(e => e.ToTask()).ToArray();
+            return tasks.Where(
+                t => t.Data.ToRequestClaimTaskData().ShouldBeApprovedByAny
+                .Any(ur => roles.Contains(ur)))
+                .ToArray();
         }
 
         public async Task UpdateTaskAsync(BotTask task)

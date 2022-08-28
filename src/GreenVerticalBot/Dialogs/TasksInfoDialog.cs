@@ -1,4 +1,5 @@
-﻿using GreenVerticalBot.Configuration;
+﻿using GreenVerticalBot.Authorization;
+using GreenVerticalBot.Configuration;
 using GreenVerticalBot.Extensions;
 using GreenVerticalBot.Tasks;
 using GreenVerticalBot.Tasks.Data;
@@ -14,12 +15,12 @@ namespace GreenVerticalBot.Dialogs
     {
         ITaskManager taskManager;
         public TasksInfoDialog(
-            DialogOrcestrator dialogOrcestrator, 
-            BotConfiguration config, 
-            IUserManager userManager, 
+            DialogOrcestrator dialogOrcestrator,
+            BotConfiguration config,
+            IUserManager userManager,
             ITaskManager taskManager,
-            DialogContext context, 
-            ILogger<DialogBase> logger) 
+            DialogContext context,
+            ILogger<DialogBase> logger)
             : base(dialogOrcestrator, config, userManager, context, logger)
         {
             this.taskManager = taskManager
@@ -44,33 +45,21 @@ namespace GreenVerticalBot.Dialogs
             sb.AppendLine("<b>Активные запросы:</b>");
             foreach (var task in userTasks.Where(t => t.Status == EntityFramework.Entities.Tasks.StatusFormats.Created))
             {
-                sb.AppendLine($"<b>❓ Запрос [{task.Id}]</b>");
-                sb.AppendLine(task.Type.ToDescriptionString());
-                sb.AppendLine(task.Status.ToDescriptionString());
-                sb.AppendLine();
+                sb.AppendLine(TasksInfoDialog.FormatTask(task));
             }
             sb.AppendLine();
 
             sb.AppendLine("<b>Подтверждённые запросы:</b>");
             foreach (var task in userTasks.Where(t => t.Status == EntityFramework.Entities.Tasks.StatusFormats.Approved))
             {
-                sb.AppendLine($"<b>❓ Запрос [{task.Id}]</b>");
-                sb.AppendLine(task.Type.ToDescriptionString());
-                sb.AppendLine(task.Status.ToDescriptionString());
-                sb.AppendLine();
+                sb.AppendLine(TasksInfoDialog.FormatTask(task));
             }
             sb.AppendLine();
 
             sb.AppendLine("<b>Отклонённые запросы:</b>");
             foreach (var task in userTasks.Where(t => t.Status == EntityFramework.Entities.Tasks.StatusFormats.Declined))
             {
-                sb.AppendLine($"<b>❓ Запрос [{task.Id}]</b>");
-                sb.AppendLine(task.Type.ToDescriptionString());
-                sb.AppendLine(task.Status.ToDescriptionString());
-                sb.AppendLine();
-
-                var reason = ((RequestClaimTaskData)task.Data).Reason;
-                sb.AppendLine(reason);
+                sb.AppendLine(TasksInfoDialog.FormatTask(task));
             }
             sb.AppendLine();
 
@@ -79,6 +68,26 @@ namespace GreenVerticalBot.Dialogs
                 text: sb.ToString(),
                 cancellationToken: cancellationToken,
                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
+        }
+        private static string FormatTask(BotTask task)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"<b>❓ Запрос [{task.Id}]</b>");
+            sb.AppendLine(task.Type.ToDescriptionString());
+            sb.AppendLine(task.Status.ToDescriptionString());
+            sb.AppendLine();
+
+            if (task.Type == EntityFramework.Entities.Tasks.TaskType.RequestClaim)
+            {
+                sb.AppendLine($"Запрашиваемые права:");
+                foreach (var claim in task.Data.ToRequestClaimTaskData().Claims)
+                {
+                    sb.AppendLine($"*    {Enum.Parse<UserRole>(claim.Value).ToDescriptionString()}");
+                }
+                var reason = task.Data.ToRequestClaimTaskData().Reason;
+                sb.AppendLine($"Причина: {reason}");
+            }
+            return sb.ToString();
         }
     }
 }

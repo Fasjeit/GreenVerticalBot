@@ -46,11 +46,15 @@ namespace GreenVerticalBot.Dialogs
                             text: $"{JsonConvert.SerializeObject(user, Formatting.Indented)}",
                             cancellationToken: cancellationToken);
 
-                var tasks = await this.taskManager.GetTasksByLinkedObjectAsync(user.TelegramId.ToString());
-                await botClient.SendTextMessageAsync(
-                            chatId: this.Context.ChatId,
-                            text: $"{JsonConvert.SerializeObject(tasks, Formatting.Indented)}",
-                            cancellationToken: cancellationToken);
+                if (user?.TelegramId != null)
+                {
+                    var tasks = await this.taskManager.GetTasksByLinkedObjectAsync(user.TelegramId.ToString());
+                    await botClient.SendTextMessageAsync(
+                                chatId: this.Context.ChatId,
+                                text: $"{JsonConvert.SerializeObject(tasks, Formatting.Indented)}{Environment.NewLine}" +
+                                $"tg://user?id={userId}",
+                                cancellationToken: cancellationToken);
+                }
             }
         }
     }

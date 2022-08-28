@@ -1,4 +1,6 @@
 ﻿using GreenVerticalBot.EntityFramework.Entities.Tasks;
+using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace GreenVerticalBot.EntityFramework.Store.Tasks
 {
@@ -27,17 +29,27 @@ namespace GreenVerticalBot.EntityFramework.Store.Tasks
 
         public async Task<TaskEntity?> GetTaskAsync(string taskId)
         {
+            if (taskId == null)
+            {
+                return null;
+            }
             return await this.tasksStore.GetByIdAsync(taskId);
         }
 
-        public async Task UpdateTaskAsync(TaskEntity entity)
+        public Task UpdateTaskAsync(TaskEntity entity)
         {
-            await this.tasksStore.UpdateAsync(entity);
+            entity.UpdateTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            return this.tasksStore.UpdateAsync(entity);
         }
 
         public Task<TaskEntity[]> GetTasksByLinkedObjectAsync(string linkedObjectId)
         {
-            return Task.FromResult(this.tasksStore.EntitySetNoTracking.Where(t => t.LinkedObject == linkedObjectId).ToArray());
+            return this.tasksStore.EntitySetNoTracking.Where(t => t.LinkedObject == linkedObjectId).ToArrayAsync();
+        }
+
+        public Task<TaskEntity[]> GetToApproveTasks()
+        {
+            return this.tasksStore.EntitySetNoTracking.Where(t => t.Status == StatusFormats.Created.ToString()).ToArrayAsync();
         }
     }
 }

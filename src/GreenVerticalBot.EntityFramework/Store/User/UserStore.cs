@@ -28,6 +28,10 @@ namespace GreenVerticalBot.EntityFramework.Store.User
 
         public async Task<UserEntity?> GetUserAsync(string userId)
         {
+            if (userId == null)
+            {
+                return null;
+            }
             return await this.userStore.GetByIdAsync(userId);
         }
 

@@ -11,6 +11,15 @@ namespace GreenVerticalBot.Tasks.Data
     {
         public static TaskType Type = TaskType.RequestChatAccess;
 
+        public RequestChatAccessData()
+        {
+        }
+
+        public RequestChatAccessData(Dictionary<string, object> dictionary)
+            : base(dictionary)
+        {
+        }
+
         public string? ChatId
         {
             get

@@ -10,7 +10,7 @@ namespace GreenVerticalBot.Tasks
         public TaskType Type { get; set; } = TaskType.NoType;
         public DateTimeOffset CreationTime { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset UpdateTime { get; set; } = DateTimeOffset.UtcNow;
-        public TaskData Data { get; set; } = new TaskData();
+        public TaskData Data { get; set; } = new RequestChatAccessData();
         public StatusFormats Status { get; set; } = StatusFormats.Created;
         public string? LinkedObject { get; set; }
     }

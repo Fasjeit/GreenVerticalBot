@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GreenVerticalBot.Authorization;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -29,6 +30,8 @@ namespace GreenVerticalBot.Tasks
         /// <returns></returns>
         Task UpdateTaskAsync(BotTask task);
 
-        Task <BotTask[]> GetTasksByLinkedObjectAsync(string linkedObjectId);
+        Task<BotTask[]> GetTasksByLinkedObjectAsync(string linkedObjectId);
+
+        Task<BotTask[]> GetTasksToApproveByRequredClaimAsync(UserRole[] role);
     }
 }
