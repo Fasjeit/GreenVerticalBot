@@ -122,7 +122,7 @@ namespace GreenVerticalBot.Dialogs
                             replyMarkup: new ReplyKeyboardRemove());
                         this.state = RegisterDialogState.RegisterWithRosreestrDduStampStart;
                     }
-                    else if (update?.Message?.Text is string { } text && text.StartsWith("/etc"))
+                    else if (update?.Message?.Text is string { } textS && textS.StartsWith("/etc"))
                     {
                         this.state = RegisterDialogState.EtcSelectClaimType;
                         // step into state
