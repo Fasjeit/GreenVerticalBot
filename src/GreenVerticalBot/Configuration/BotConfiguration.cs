@@ -28,6 +28,8 @@ namespace GreenVerticalBot.Configuration
         public Dictionary<string, List<string>> ExtraClaims { get; set; }
 
         public Dictionary<string, ChatInfo> ChatInfos { get; set; }
+
+        public List<string> RestrictedTo { get; set; } = new List<string>();
     }
 
     internal class ChatInfo

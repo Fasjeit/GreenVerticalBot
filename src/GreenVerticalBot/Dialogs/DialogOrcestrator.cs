@@ -62,6 +62,18 @@ namespace GreenVerticalBot.Dialogs
                 return;
             }
 
+            if (this.config.RestrictedTo.Count != 0)
+            {
+                var userId = DialogBase.GetUserId(update);
+                if (!this.config.RestrictedTo.Contains(userId.ToString()))
+                {
+                    this.logger.LogInformation(
+                        $"Access denied for [{StringFormatHelper.GetUserIdForLogs(update)}]" +
+                        $" as bot is in restricted mod");
+                    return;
+                }
+            }
+
             // Не обрабатываем сообщений, которые пришли ранее, чем минуту назад
             if (update?.Message?.Date < DateTime.UtcNow - TimeSpan.FromMinutes(1))
             {
@@ -198,7 +210,7 @@ namespace GreenVerticalBot.Dialogs
                             true);
                         return;
                     }
-                    else if (update?.Message?.Text == "/approve_task")
+                    else if (update?.Message?.Text == "/o_approve")
                     {
                         await this.SwitchToDialogAsync<ApproveDialog>
                             ($"{dialog.Context.ChatId}",
@@ -250,13 +262,20 @@ namespace GreenVerticalBot.Dialogs
                 this.logger.LogCritical($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
                            $": critial error - [{ex.ToString()}]");
 
-                await botClient.SendTextMessageAsync(
-                    chatId: dialogId,
-                    text:
-                        $"Произошла ошибка при работе бота. Попробуйте позднее.",
-                             parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
-                    cancellationToken: cancellationToken);
-
+                try
+                {
+                    await botClient.SendTextMessageAsync(
+                        chatId: dialogId,
+                        text:
+                            $"Произошла ошибка при работе бота. Попробуйте позднее.",
+                                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
+                        cancellationToken: cancellationToken);
+                }
+                catch (Exception ex1)
+                {
+                    this.logger.LogCritical($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
+                           $": critial error - [{ex1.ToString()}]");
+                }
                 // чистим скоуп, так как там уже не получится прогрузить бд
                 this.RemoveScopes(new[] { long.Parse(dialogId) });
             }

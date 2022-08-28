@@ -44,7 +44,7 @@ namespace GreenVerticalBot.Dialogs
             {
                 stringBuilder.AppendLine();
                 stringBuilder.AppendLine($"Команды оператора:");
-                stringBuilder.AppendLine("/approve_task Подтверждение заявок");
+                stringBuilder.AppendLine("/o_approve Подтверждение заявок");
             }
 
             if (this.Context.Claims.HasRole(UserRole.Admin))

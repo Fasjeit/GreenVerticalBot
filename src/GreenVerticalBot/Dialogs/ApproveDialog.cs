@@ -130,7 +130,7 @@ namespace GreenVerticalBot.Dialogs
                 {
                     var taskId = this.Context.ContextDataString["task_id"];
 
-                    if (update?.Message?.Text is string { } text && text.StartsWith("/approve"))
+                    if (update?.Message?.Text == "/approve")
                     {
                         // TransactionScopeAsyncFlowOption.Enabled - для async
                         // ReadUncommitted - для избавления от дедлоков базы
@@ -234,7 +234,7 @@ namespace GreenVerticalBot.Dialogs
                             return;
                         }
                     }
-                    else if (update?.Message?.Text is string { } textS && textS.StartsWith("/reject"))
+                    else if (update?.Message?.Text == "/reject")
                     {
                         await botClient.SendTextMessageAsync(
                                 chatId: this.Context.TelegramUserId,

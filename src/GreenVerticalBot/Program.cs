@@ -23,6 +23,7 @@ namespace GreenVerticalBot
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
                 .Enrich.FromLogContext()
                 .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{SourceContext}] [{Level}] {Message}{NewLine}{Exception}")
+                .WriteTo.File("bot_log.txt", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
             await GreenVerticalBotHost.RunHost();

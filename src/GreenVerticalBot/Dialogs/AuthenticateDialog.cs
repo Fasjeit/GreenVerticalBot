@@ -94,7 +94,7 @@ namespace GreenVerticalBot.Dialogs
                 }
                 case RegisterDialogState.SelectRegistrationType:
                 {
-                    if (update?.Message?.Text is string{ } text && text.StartsWith("/rosreestr"))
+                    if (update?.Message?.Text == "/rosreestr")
                     {
                         if (this.Context?.User?.Claims != null &&
                             this.Context.User.Claims.Any(c => c.Value == UserRole.RegisteredUser.ToString()))
@@ -122,7 +122,7 @@ namespace GreenVerticalBot.Dialogs
                             replyMarkup: new ReplyKeyboardRemove());
                         this.state = RegisterDialogState.RegisterWithRosreestrDduStampStart;
                     }
-                    else if (update?.Message?.Text is string { } textS && textS.StartsWith("/etc"))
+                    else if (update?.Message?.Text == "/etc")
                     {
                         this.state = RegisterDialogState.EtcSelectClaimType;
                         // step into state
@@ -366,7 +366,7 @@ namespace GreenVerticalBot.Dialogs
                     if (update?.Message?.Text != null &&
                         update.Message.Text.StartsWith("/k9"))
                     {
-                        this.Context.ContextDataString["required_claim"] = UserRole.AccessToB9_ex10Chat.ToString();
+                        this.Context.ContextDataString["required_claim"] = UserRole.AccessToB9_ex10.ToString();
                     }
                     else
                     {
@@ -447,7 +447,7 @@ namespace GreenVerticalBot.Dialogs
                             FileProofName = message.Document.FileName,
                             ShouldBeApprovedByAny = new List<UserRole>()
                             {
-                                UserRole.OperatorAccessToB9_ex10Chat
+                                UserRole.OperatorAccessToB9_ex10
                             }
                         }
                     };

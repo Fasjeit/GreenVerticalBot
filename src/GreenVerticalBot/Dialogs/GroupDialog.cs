@@ -40,7 +40,7 @@ namespace GreenVerticalBot.Dialogs
 
         internal override async Task ProcessUpdateCoreAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
-            if (update?.Message?.Text is string { } text && text.StartsWith("/chatId"))
+            if (update?.Message?.Text is String { } text && text.StartsWith("/chat_id"))
             {
                 if (this.Context.Claims.HasRole(UserRole.Admin))
                 {
@@ -51,14 +51,22 @@ namespace GreenVerticalBot.Dialogs
                 }
                 return;
             }
-            if (update?.Message?.Text is string { } textS && textS.StartsWith("/authenticate"))
+            else if (update?.Message?.Text is String { } textS && textS.StartsWith("/authenticate"))
             {
 
                 var chatId = this.Context.ChatId;
 
                 // Получаем список ролей, которые надо выдать
-                var chatInfo = this.Config.ChatInfos.FirstOrDefault(ci => ci.Value.ChatId == chatId.ToString());
-                var requiredRoles = chatInfo.Value.RequredClaims;
+                var chatInfo = this.Config?.ChatInfos?.Values?.FirstOrDefault(ci => ci.ChatId == chatId.ToString());
+                if (chatInfo == null)
+                {
+                    await botClient.SendTextMessageAsync(
+                                chatId: this.Context.TelegramUserId,
+                                text: $"Чат не зарегистрован в боте :(",
+                                cancellationToken: cancellationToken);
+                    return;
+                }
+                var requiredRoles = chatInfo.RequredClaims;
 
                 var claims = new List<BotClaim>();
                 foreach (var requiredRole in requiredRoles)
