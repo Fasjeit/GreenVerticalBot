@@ -130,7 +130,7 @@ namespace GreenVerticalBot.Dialogs
                 {
                     var taskId = this.Context.ContextDataString["task_id"];
 
-                    if (update.Message.Text.StartsWith("/approve"))
+                    if (update?.Message?.Text is string { } text && text.StartsWith("/approve"))
                     {
                         // TransactionScopeAsyncFlowOption.Enabled - для async
                         // ReadUncommitted - для избавления от дедлоков базы
@@ -234,7 +234,7 @@ namespace GreenVerticalBot.Dialogs
                             return;
                         }
                     }
-                    else if (update.Message.Text.StartsWith("/reject"))
+                    else if (update?.Message?.Text is string { } textS && textS.StartsWith("/reject"))
                     {
                         await botClient.SendTextMessageAsync(
                                 chatId: this.Context.TelegramUserId,
@@ -252,6 +252,14 @@ namespace GreenVerticalBot.Dialogs
                 }
                 case ApproveDialogState.ReadReason:
                 {
+                    if (string.IsNullOrEmpty(update?.Message?.Text))
+                    {
+                        await botClient.SendTextMessageAsync(
+                                chatId: this.Context.TelegramUserId,
+                                text: $"Опишите причину отклонения, её увидит пользователь",
+                                cancellationToken: cancellationToken);
+                        return;
+                    }
                     var reason = update.Message.Text;
                     var taskId = this.Context.ContextDataString["task_id"];
                     var task = await this.taskManager.GetTaskAsync(taskId);
