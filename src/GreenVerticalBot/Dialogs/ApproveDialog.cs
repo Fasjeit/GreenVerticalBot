@@ -203,6 +203,8 @@ namespace GreenVerticalBot.Dialogs
                                 //return;
                             }
 
+                            // добавляем только новые
+                            // Claims реализует свой компаратор по значению. Должен работать
                             newUserClaims
                                 .Where(uc => !user.Claims.Contains(uc))
                                 .ToList()

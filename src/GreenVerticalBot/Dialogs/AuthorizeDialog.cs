@@ -47,21 +47,21 @@ namespace GreenVerticalBot.Dialogs
             {
                 case AuthorizeDialogState.Init:
                 {
-                    var keyboard = new ReplyKeyboardMarkup(new KeyboardButton[][]
-                            {
-                        new[]
-                        {
-                            new KeyboardButton("/k9 Регистрация в закрытом чате 9-го корпуса (10 строительный)"),
-                        },
-                        new[]
-                        {
-                            new KeyboardButton("/general регистрация в общем закрытом чате жильцов"),
-                        }
-                            })
-                    {
-                        OneTimeKeyboard = true,
-                        ResizeKeyboard = true,
-                    };
+                    //var keyboard = new ReplyKeyboardMarkup(new KeyboardButton[][]
+                    //        {
+                    //    new[]
+                    //    {
+                    //        new KeyboardButton("/k9 Регистрация в закрытом чате 9-го корпуса (10 строительный)"),
+                    //    },
+                    //    new[]
+                    //    {
+                    //        new KeyboardButton("/general регистрация в общем закрытом чате жильцов"),
+                    //    }
+                    //        })
+                    //{
+                    //    OneTimeKeyboard = true,
+                    //    ResizeKeyboard = true,
+                    //};
 
 
                     var sb = new StringBuilder();
@@ -94,12 +94,13 @@ namespace GreenVerticalBot.Dialogs
                     if (!this.Context.Claims.HasAllRolles(chat.RequredClaims))
                     {
                         this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
-                            $": unathorized access to [{chat.ChatId}]");
+                            $": unathorized access attempt to [{chat.ChatId}]");
 
                         await botClient.SendTextMessageAsync(
                             chatId: this.Context.ChatId,
                             text:
-                                $"Попытка неавторизованного доступа. Недостаточно прав.",
+                                $"Попытка неавторизованного доступа. Недостаточно прав.{Environment.NewLine}" +
+                                $"Требуются права:[{string.Join(',', chat.RequredClaims.Select(rc => rc.ToString()))}]",
                             parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
                             cancellationToken: cancellationToken);
                         await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
@@ -153,7 +154,7 @@ namespace GreenVerticalBot.Dialogs
                         userInvite = new Invite()
                         {
                             Id = $"{inviteLink.Name}",
-                            Despription = "Приглашение в общий закрытый чат",
+                            Despription = $"Приглашение в [{chat.FriendlyName}]",
                             Value = $"{inviteLink.InviteLink}"
                         };
 
