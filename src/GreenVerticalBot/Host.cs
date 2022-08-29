@@ -34,7 +34,9 @@ namespace GreenVerticalBot
                     (IServiceProvider serviceProvider, DbContextOptionsBuilder options) =>
                 {
                     var configuration = serviceProvider.GetConfiguration<BotConfiguration>();
-                    options.UseMySQL(configuration.MySqlConnectionString);
+                    options.UseMySql(
+                        configuration.MySqlConnectionString,
+                        MariaDbServerVersion.LatestSupportedServerVersion);
                 });
 
                 services.AddScoped<ITaskStore, TaskStore>();

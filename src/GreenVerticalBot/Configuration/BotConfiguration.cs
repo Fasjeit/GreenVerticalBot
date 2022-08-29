@@ -37,5 +37,6 @@ namespace GreenVerticalBot.Configuration
         public string FriendlyName { get; set; } = string.Empty;
         public string ChatId { get; set; } = string.Empty;
         public List<UserRole> RequredClaims { get; set; } = new List<UserRole>() { };
+        public List<UserRole> ShouldBeApprovedByAny { get; set; } = new List<UserRole>() { };
     }
 }

@@ -84,9 +84,11 @@ namespace GreenVerticalBot.Dialogs
                         chatId: this.Context.ChatId,
                         text:
                             $"Выберите способы регистации:{Environment.NewLine}{Environment.NewLine}" +
-                            $"* /rosreestr Штамп о регистрации ДДУ в Росреестре [ Житель жк ] {Environment.NewLine}" +
-                            $"* /etc Прочий документ, подтверждающий владение [ Житель жк, Житель корпуса ]",
-                        parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
+                            $"* /rosreestr Штамп о регистрации ДДУ в Росреестре{Environment.NewLine}" +
+                            $"Получение прав: [ Житель жк ] {Environment.NewLine}{Environment.NewLine}" +
+                            $"* /etc Прочий документ, подтверждающий владение{Environment.NewLine}" +
+                            $"Получение прав: [ Житель жк, Житель корпуса ]{Environment.NewLine}{Environment.NewLine}",
+                        //parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
                         //replyMarkup: keyboard,
                         cancellationToken: cancellationToken);
                     this.state = RegisterDialogState.SelectRegistrationType;
@@ -155,7 +157,7 @@ namespace GreenVerticalBot.Dialogs
                         return;
                     }
                     var documentSize = message.Document.FileSize;
-                    if (documentSize > 100000)
+                    if (documentSize > 1000000)
                     {
                         Message error = await botClient.SendTextMessageAsync(
                            chatId: this.Context.ChatId,
@@ -304,7 +306,7 @@ namespace GreenVerticalBot.Dialogs
                         Status = StatusFormats.Approved,
                         LinkedObject = this.Context.TelegramUserId.ToString(),
                         Type = TaskType.RequestClaim,
-                        Data = new RequestClaimTaskData() { Claims = claims, Reason = "Подтверждено ботом" },
+                        Data = new RequestClaimTaskData() { Claims = claims, Reason = "Подтверждено ботом через проверку файла" },
                     };
                     await this.taskManager.AddTaskAsync(task);
 
@@ -350,7 +352,12 @@ namespace GreenVerticalBot.Dialogs
 
                     var sb = new StringBuilder();
                     sb.AppendLine("Выберите утрверждеие для получения:");
-                    sb.AppendLine("/k9 - 🏡 житель 9 корпуса (10 строительный)");
+
+                    var chatInfos = this.Config.ChatInfos;
+                    foreach (var chatInfo in chatInfos)
+                    {
+                        sb.AppendLine($"/{chatInfo.Key} - 🏡 {chatInfo.Value.FriendlyName}");
+                    }
 
                     await botClient.SendTextMessageAsync(
                             chatId: this.Context.ChatId,
@@ -363,10 +370,10 @@ namespace GreenVerticalBot.Dialogs
                 {
 
                     // parce and rememder requredCLaims
-                    if (update?.Message?.Text != null &&
-                        update.Message.Text.StartsWith("/k9"))
+                    if (update?.Message?.Text != null
+                        && this.Config.ChatInfos.TryGetValue(update.Message.Text.Trim('/'), out var value))
                     {
-                        this.Context.ContextDataString["required_claim"] = UserRole.AccessToB9_ex10.ToString();
+                        this.Context.ContextDataObject["requested_chat"] = value;
                     }
                     else
                     {
@@ -397,7 +404,7 @@ namespace GreenVerticalBot.Dialogs
                         return;
                     }
                     var documentSize = message.Document.FileSize;
-                    if (documentSize > 100000)
+                    if (documentSize > 1000000)
                     {
                         Message error = await botClient.SendTextMessageAsync(
                            chatId: this.Context.ChatId,
@@ -420,6 +427,22 @@ namespace GreenVerticalBot.Dialogs
                         destination: stream);
                     stream.Position = 0;
 
+                    var requestedChat = this.Context.ContextDataObject["requested_chat"] as ChatInfo;
+                    var requiredRoles = requestedChat.RequredClaims;
+
+                    var claimsToAdd = new List<BotClaim>();
+
+                    foreach (var requiredRole in requiredRoles)
+                    {
+                        var claim = new BotClaim(
+                            type: ClaimTypes.Role,
+                            value: requiredRole.ToString(),
+                            valueType: null,
+                            issuer: "operator",
+                            originalIssuer: null);
+                        claimsToAdd.Add(claim);
+                    }
+
                     // Создаём задачу на подтверждение
                     var task = new BotTask()
                     {
@@ -428,27 +451,10 @@ namespace GreenVerticalBot.Dialogs
                         LinkedObject = this.Context.TelegramUserId.ToString(),
                         Data = new RequestClaimTaskData()
                         {
-                            Claims = new List<BotClaim>()
-                            {
-                                new BotClaim(
-                                     type: ClaimTypes.Role,
-                                     value: UserRole.RegisteredUser.ToString(),
-                                     valueType: null,
-                                     issuer: "operator",
-                                     originalIssuer: null),
-                                new BotClaim(
-                                     type: ClaimTypes.Role,
-                                     value: this.Context.ContextDataString["required_claim"],
-                                     valueType: null,
-                                     issuer: "operator",
-                                     originalIssuer: null),
-                            },
+                            Claims = claimsToAdd,
                             FileProofBase64 = Convert.ToBase64String(stream.ToArray()),
                             FileProofName = message.Document.FileName,
-                            ShouldBeApprovedByAny = new List<UserRole>()
-                            {
-                                UserRole.OperatorAccessToB9_ex10
-                            }
+                            ShouldBeApprovedByAny = requestedChat.ShouldBeApprovedByAny
                         }
                     };
                     await this.taskManager.AddTaskAsync(task);

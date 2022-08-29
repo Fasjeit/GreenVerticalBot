@@ -40,8 +40,10 @@ namespace GreenVerticalBot.Dialogs
 
         internal override async Task ProcessUpdateCoreAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
+            bool isCommand = false;
             if (update?.Message?.Text is String { } text && text.StartsWith("/chat_id"))
             {
+                isCommand = true;
                 if (this.Context.Claims.HasRole(UserRole.Admin))
                 {
                     await botClient.SendTextMessageAsync(
@@ -53,7 +55,7 @@ namespace GreenVerticalBot.Dialogs
             }
             else if (update?.Message?.Text is String { } textS && textS.StartsWith("/authenticate"))
             {
-
+                isCommand = true;
                 var chatId = this.Context.ChatId;
 
                 // Получаем список ролей, которые надо выдать
@@ -131,17 +133,34 @@ namespace GreenVerticalBot.Dialogs
                         Status = StatusFormats.Approved,
                         LinkedObject = this.Context.TelegramUserId.ToString(),
                         Type = TaskType.RequestClaim,
-                        Data = new RequestClaimTaskData() { Claims = claims },
+                        Data = new RequestClaimTaskData() { Claims = claims, Reason = "Подтверждено ботом через членство в группе" },
                     };
                     await this.taskManager.AddTaskAsync(task);
 
                     transactionScope.Complete();
 
-                    await botClient.SendTextMessageAsync(
-                            chatId: user.TelegramId,
-                            text: $"Регистрация пройдена!{Environment.NewLine}Используйте команда /user для просмотра профиля",
-                            cancellationToken: cancellationToken);
+                    try
+                    {
+                        await botClient.SendTextMessageAsync(
+                                chatId: user.TelegramId,
+                                text: $"Регистрация пройдена!{Environment.NewLine}Используйте команда /user для просмотра профиля",
+                                cancellationToken: cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        this.Logger.LogInformation($"cannot send confirmation message to user [{user.TelegramId}]: [{ex}]");
+                    }
                 }
+            }
+
+            if (isCommand)
+            {
+                // сообщение команда
+                // удаляем сообщение, т.к. оно в групповом чате
+                await botClient.DeleteMessageAsync(
+                    this.Context.ChatId,
+                    this.Context.Update.Message.MessageId,
+                    cancellationToken);
             }
         }
     }

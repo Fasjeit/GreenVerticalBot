@@ -61,14 +61,6 @@ namespace GreenVerticalBot.Dialogs
                 update,
                 cancellationToken);
 
-            var user = this.Context.User;
-            if (user != null &&
-                user.LastAccessTime < DateTime.UtcNow - TimeSpan.FromMinutes(1))
-            {
-                // Если пользователь был активен более бинуты назад - обновляем время активности
-                user.LastAccessTime = DateTimeOffset.UtcNow;
-            }
-
             await this.ProcessUpdateCoreAsync(botClient, update, cancellationToken);
         }
 
@@ -89,9 +81,11 @@ namespace GreenVerticalBot.Dialogs
 
             var userId = DialogBase.GetUserId(update);
             var user = await this.userManager.GetUserByTelegramIdAsync(userId);
-            if (user != null)
+            if (user != null &&
+                user.LastAccessTime < DateTime.UtcNow - TimeSpan.FromMinutes(1))
             {
-                user.LastAccessTime = DateTime.UtcNow;
+                // Если пользователь был активен более бинуты назад - обновляем время активности
+                user.LastAccessTime = DateTimeOffset.UtcNow;
                 await this.userManager.UpdateUserAsync(user);
             }
 

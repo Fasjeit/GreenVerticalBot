@@ -178,7 +178,7 @@ namespace GreenVerticalBot.Dialogs
 
                             await this.taskManager.UpdateTaskAsync(task);
 
-                            var user = await this.userManager.GetUserAsync(task.LinkedObject);
+                            var user = await this.userManager.GetUserByTelegramIdAsync(long.Parse(task.LinkedObject));
                             if (user == null)
                             {
                                 this.Logger.LogInformation(

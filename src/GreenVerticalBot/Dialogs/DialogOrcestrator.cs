@@ -142,18 +142,16 @@ namespace GreenVerticalBot.Dialogs
                     // Если сообщение в групповом чате - обрабатываем отдельно в соотв. диалоге
                     if (DialogBase.IsGroupMessage(update))
                     {
-                        // удаляем сообщение, т.к. оно в групповом чате
-                        await dialog.Context.BotClient.DeleteMessageAsync(
-                            dialog.Context.ChatId,
-                            dialog.Context.Update.Message.MessageId,
-                            cancellationToken);
-
-                        await this.SwitchToDialogAsync<GroupDialog>
-                            ($"{dialog.Context.ChatId}",
-                            botClient,
-                            update,
-                            cancellationToken,
-                            true);
+                        if (update?.Message?.Text is string { } text &&
+                            text.StartsWith("/"))
+                        {
+                            await this.SwitchToDialogAsync<GroupDialog>
+                                ($"{dialog.Context.ChatId}",
+                                botClient,
+                                update,
+                                cancellationToken,
+                                true);
+                        }
                         return;
                     }
 
@@ -300,7 +298,7 @@ namespace GreenVerticalBot.Dialogs
             if (!isAuthorized)
             {
                 this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
-                        $": unauthorized access to [{dialog.GetType().Name}]");
+                        $": unauthorized access to [{typeof(T).Name}]");
 
                 await botClient.SendTextMessageAsync(
                     chatId: dialog.Context.ChatId,

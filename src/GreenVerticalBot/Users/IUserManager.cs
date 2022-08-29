@@ -14,7 +14,7 @@
         /// </summary>
         /// <param name="userId"></param>
         /// <returns></returns>
-        Task<User?> GetUserAsync(string telegramUserId);
+        //Task<User?> GetUserAsync(string telegramUserId);
 
         /// <summary>
         /// Получить информацию о пользователе по Id Telegram
