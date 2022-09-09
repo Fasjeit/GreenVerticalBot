@@ -14,10 +14,7 @@ RUN dotnet publish -c Debug -o out
 
 # Build runtime image
 FROM mcr.microsoft.com/dotnet/runtime:6.0
-RUN apt-get update && \
-    apt-get install -y software-properties-common && \
-    rm -rf /var/lib/apt/lists/*
-RUN add-apt-repository ppa:quamotion/ppa
+RUN apt update
 RUN apt-get install -y libgdiplus
 WORKDIR /app
 COPY --from=build-env /app/GreenVerticalBot/out .
