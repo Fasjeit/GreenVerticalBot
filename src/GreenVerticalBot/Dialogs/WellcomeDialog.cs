@@ -28,6 +28,21 @@ namespace GreenVerticalBot.Dialogs
         {
             var userId = this.Context.TelegramUserId;
 
+            if (update?.Message?.Text == "/start")
+            {
+                var introString = 
+                    $"1. Используйте команду `/authenticate` в личном чате с ботом для выбора корпуса и загрузки файла подтверждения{Environment.NewLine}{Environment.NewLine}" +
+                    $"2. После создания запроса на регистрацию ожидайте проверки оператором. Бот уведомит вас о результатах проверки.{Environment.NewLine}" +
+                    $"Статус запроса можно проверить через команду `/tasks`{Environment.NewLine}{Environment.NewLine}" +
+                    $"3. После подтверждения запроса оператором воспользуйтесь командой `/authorize` для получения доступа к закрытому чату.{Environment.NewLine}" +
+                    $"Список приглашений в закрытые чаты можно просмотреть через команду `/user`{Environment.NewLine}";
+
+                await botClient.SendTextMessageAsync(
+                    chatId: userId,
+                    text: introString,
+                    cancellationToken: cancellationToken);
+            }
+
             var stringBuilder = new StringBuilder();
             stringBuilder.AppendLine("Список команд:");
             stringBuilder.AppendLine();
@@ -57,7 +72,7 @@ namespace GreenVerticalBot.Dialogs
             }
 
             // Выводим привественное сообщение
-            Message sentMessage = await botClient.SendTextMessageAsync(
+            await botClient.SendTextMessageAsync(
                 chatId: userId,
                 text: stringBuilder.ToString(),
                 cancellationToken: cancellationToken);

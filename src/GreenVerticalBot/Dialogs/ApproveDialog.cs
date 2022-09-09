@@ -82,6 +82,11 @@ namespace GreenVerticalBot.Dialogs
                             chatId: this.Context.TelegramUserId,
                             text: "Нет запросов на подтверждение :)",
                             cancellationToken: cancellationToken);
+                        await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
+                            this.Context.ChatId.ToString(),
+                            botClient,
+                            update,
+                            cancellationToken);
                         return;
                     }
 

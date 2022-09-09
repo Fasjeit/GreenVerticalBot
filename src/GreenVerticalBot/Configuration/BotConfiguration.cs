@@ -27,9 +27,9 @@ namespace GreenVerticalBot.Configuration
 
         public long MaxFileSize { get; set; }
 
-        public Dictionary<string, List<string>> ExtraClaims { get; set; }
+        public Dictionary<string, List<string>> ExtraClaims { get; set; } = new Dictionary<string, List<string>>();
 
-        public Dictionary<string, ChatInfo> ChatInfos { get; set; }
+        public Dictionary<string, ChatInfo> ChatInfos { get; set; } = new Dictionary<string, ChatInfo>();
 
         public List<string> RestrictedTo { get; set; } = new List<string>();
     }
