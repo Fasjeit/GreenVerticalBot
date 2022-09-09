@@ -28,5 +28,17 @@ namespace GreenVerticalBot.Helpers
             }
             return $"{update.Message.From.Username}:aka:[{update.Message.From.Id}]";
         }
+
+        public static string GetUserDisplayName(
+            Update update)
+        {
+            if (update?.Message?.From == null)
+            {
+                throw new ArgumentException();
+            }
+            return $"@{update.Message.From.Username}:" +
+                $"{update.Message.From.FirstName} {update.Message.From.LastName}" +
+                $":id [{update.Message.From.Id}]";
+        } 
     }
 }

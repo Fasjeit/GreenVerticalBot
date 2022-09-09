@@ -83,9 +83,9 @@ namespace GreenVerticalBot.Dialogs
                     await botClient.SendTextMessageAsync(
                         chatId: this.Context.ChatId,
                         text:
-                            $"Выберите способы регистации:{Environment.NewLine}{Environment.NewLine}" +
-                            $"* /rosreestr Штамп о регистрации ДДУ в Росреестре{Environment.NewLine}" +
-                            $"Получение прав: [ Житель жк ] {Environment.NewLine}{Environment.NewLine}" +
+                            //$"Выберите способы регистации:{Environment.NewLine}{Environment.NewLine}" +
+                            //$"* /rosreestr Штамп о регистрации ДДУ в Росреестре{Environment.NewLine}" +
+                            //$"Получение прав: [ Житель жк ] {Environment.NewLine}{Environment.NewLine}" +
                             $"* /etc Прочий документ, подтверждающий владение{Environment.NewLine}" +
                             $"Получение прав: [ Житель жк, Житель корпуса ]{Environment.NewLine}{Environment.NewLine}",
                         //parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
@@ -96,35 +96,36 @@ namespace GreenVerticalBot.Dialogs
                 }
                 case RegisterDialogState.SelectRegistrationType:
                 {
-                    if (update?.Message?.Text == "/rosreestr")
-                    {
-                        if (this.Context?.User?.Claims != null &&
-                            this.Context.User.Claims.Any(c => c.Value == UserRole.RegisteredUser.ToString()))
-                        {
-                            await botClient.SendTextMessageAsync(
-                                chatId: this.Context.ChatId,
-                                text:
-                                    $"Пользователь уже зарегистрирован.{Environment.NewLine}" +
-                                    $"Используйте команду /user для просмотра информации",
-                                parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
-                                cancellationToken: cancellationToken);
+                    //if (update?.Message?.Text == "/rosreestr")
+                    //{
+                    //    if (this.Context?.User?.Claims != null &&
+                    //        this.Context.User.Claims.Any(c => c.Value == UserRole.RegisteredUser.ToString()))
+                    //    {
+                    //        await botClient.SendTextMessageAsync(
+                    //            chatId: this.Context.ChatId,
+                    //            text:
+                    //                $"Пользователь уже зарегистрирован.{Environment.NewLine}" +
+                    //                $"Используйте команду /user для просмотра информации",
+                    //            parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
+                    //            cancellationToken: cancellationToken);
 
-                            await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
-                                this.Context.TelegramUserId.ToString(),
-                                 botClient,
-                                 update,
-                                 cancellationToken);
-                            return;
-                        }
+                    //        await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
+                    //            this.Context.TelegramUserId.ToString(),
+                    //             botClient,
+                    //             update,
+                    //             cancellationToken);
+                    //        return;
+                    //    }
 
-                        await botClient.SendTextMessageAsync(
-                            chatId: this.Context.ChatId,
-                            text: $"Приложите файл со штампом регистрации с расширением [.xml].",
-                            cancellationToken: cancellationToken,
-                            replyMarkup: new ReplyKeyboardRemove());
-                        this.state = RegisterDialogState.RegisterWithRosreestrDduStampStart;
-                    }
-                    else if (update?.Message?.Text == "/etc")
+                    //    await botClient.SendTextMessageAsync(
+                    //        chatId: this.Context.ChatId,
+                    //        text: $"Приложите файл со штампом регистрации с расширением [.xml].",
+                    //        cancellationToken: cancellationToken,
+                    //        replyMarkup: new ReplyKeyboardRemove());
+                    //    this.state = RegisterDialogState.RegisterWithRosreestrDduStampStart;
+                    //}
+                    //else 
+                    if (update?.Message?.Text == "/etc")
                     {
                         this.state = RegisterDialogState.EtcSelectClaimType;
                         // step into state
@@ -157,7 +158,7 @@ namespace GreenVerticalBot.Dialogs
                         return;
                     }
                     var documentSize = message.Document.FileSize;
-                    if (documentSize > 1000000)
+                    if (documentSize > this.Config.MaxFileSize)
                     {
                         Message error = await botClient.SendTextMessageAsync(
                            chatId: this.Context.ChatId,
@@ -306,7 +307,12 @@ namespace GreenVerticalBot.Dialogs
                         Status = StatusFormats.Approved,
                         LinkedObject = this.Context.TelegramUserId.ToString(),
                         Type = TaskType.RequestClaim,
-                        Data = new RequestClaimTaskData() { Claims = claims, Reason = "Подтверждено ботом через проверку файла" },
+                        Data = new RequestClaimTaskData()
+                        {
+                            Claims = claims,
+                            Reason = "Подтверждено ботом через проверку файла",
+                            UserDisplayName = StringFormatHelper.GetUserDisplayName(update)
+                        },
                     };
                     await this.taskManager.AddTaskAsync(task);
 
@@ -340,6 +346,7 @@ namespace GreenVerticalBot.Dialogs
                         t.Status == StatusFormats.Created &&
                         t.Type == TaskType.RequestClaim))
                     {
+                        this.Logger.LogInformation($"user [{StringFormatHelper.GetUserIdForLogs(update)}] have already existing task to approve");
                         await botClient.SendTextMessageAsync(
                             chatId: userId,
                             text: $"У вас уже есть активный запрос. {Environment.NewLine}" +
@@ -380,6 +387,8 @@ namespace GreenVerticalBot.Dialogs
                         return;
                     }
 
+                    this.Logger.LogInformation($"user [{StringFormatHelper.GetUserIdForLogs(update)}] selected chat [{value}] to join");
+
                     await botClient.SendTextMessageAsync(
                             chatId: this.Context.ChatId,
                             text: $"Приложите файл (дду, выписка из ЕГРН, прочий документ на собственность).",
@@ -404,7 +413,7 @@ namespace GreenVerticalBot.Dialogs
                         return;
                     }
                     var documentSize = message.Document.FileSize;
-                    if (documentSize > 1000000)
+                    if (documentSize > this.Config.MaxFileSize)
                     {
                         Message error = await botClient.SendTextMessageAsync(
                            chatId: this.Context.ChatId,
@@ -454,10 +463,13 @@ namespace GreenVerticalBot.Dialogs
                             Claims = claimsToAdd,
                             FileProofBase64 = Convert.ToBase64String(stream.ToArray()),
                             FileProofName = message.Document.FileName,
-                            ShouldBeApprovedByAny = requestedChat.ShouldBeApprovedByAny
+                            ShouldBeApprovedByAny = requestedChat.ShouldBeApprovedByAny,
+                            UserDisplayName = StringFormatHelper.GetUserDisplayName(update)
                         }
                     };
                     await this.taskManager.AddTaskAsync(task);
+
+                    this.Logger.LogInformation($"user [{StringFormatHelper.GetUserIdForLogs(update)}]: new task with id [{task.Id}] created");
 
                     await botClient.SendTextMessageAsync(
                            chatId: userId,
@@ -476,6 +488,7 @@ namespace GreenVerticalBot.Dialogs
                 }
                 default:
                 {
+                    this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}]: unexpected state [{this.state}]");
                     await botClient.SendTextMessageAsync(
                             chatId: userId,
                             text: $"Данный способ регистрации временно не поддерживается",

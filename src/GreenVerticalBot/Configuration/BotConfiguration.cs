@@ -25,6 +25,8 @@ namespace GreenVerticalBot.Configuration
         /// </summary>
         public string MySqlConnectionString { get; set; }
 
+        public long MaxFileSize { get; set; }
+
         public Dictionary<string, List<string>> ExtraClaims { get; set; }
 
         public Dictionary<string, ChatInfo> ChatInfos { get; set; }

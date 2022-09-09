@@ -53,6 +53,7 @@ namespace GreenVerticalBot.Dialogs
                 stringBuilder.AppendLine($"Команды администратора:");
                 stringBuilder.AppendLine("/a_userlookup Вывод имени пользователя по id telegram");
                 stringBuilder.AppendLine("/a_status Вывод статуса бота");
+                stringBuilder.AppendLine("/a_logs Последние записи журнала бота");
             }
 
             // Выводим привественное сообщение

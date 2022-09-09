@@ -6,11 +6,9 @@ using GreenVerticalBot.Tasks;
 using GreenVerticalBot.Tasks.Data;
 using GreenVerticalBot.Users;
 using Microsoft.Extensions.Logging;
-using System.Security.Claims;
 using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.ReplyMarkups;
 
 namespace GreenVerticalBot.Dialogs
 {
@@ -71,6 +69,8 @@ namespace GreenVerticalBot.Dialogs
                     {
                         sb.AppendLine($"/{chat.Key} {chat.Value.FriendlyName}");
                     }
+
+                    this.Logger.LogInformation($"user [{StringFormatHelper.GetUserIdForLogs(update)}]: begin authorize");
 
                     await botClient.SendTextMessageAsync(
                         chatId: update.Message.Chat.Id,

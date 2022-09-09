@@ -65,6 +65,7 @@ namespace GreenVerticalBot
                 services.AddScoped<TasksInfoDialog>();
                 services.AddScoped<QrDialog>();
                 services.AddScoped<ApproveDialog>();
+                services.AddScoped<LogsDialog>();
 
                 services.AddScoped<IUserManager, UserManager>();
                 services.AddScoped<ITaskManager, TaskManager>();

@@ -11,7 +11,6 @@ namespace GreenVerticalBot.Users
         public DateTimeOffset CreationTime { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset LastAccessTime { get; set; } = DateTimeOffset.UtcNow;
         public List<BotClaim> Claims { get; set; } = new List<BotClaim>();
-        public string Building { get; set; } = UserEntity.BuildingId.None;
         public UserData Data { get; set; } = new();
         public string Status { get; set; } = UserEntity.StatusFormats.Active;
     }
@@ -27,7 +26,6 @@ namespace GreenVerticalBot.Users
                 CreationTime = user.CreationTime.ToUnixTimeSeconds(),
                 LastAccessTime = user.LastAccessTime.ToUnixTimeSeconds(),
                 Claims = JsonConvert.SerializeObject(user.Claims),
-                Building = user.Building,
                 Data = JsonConvert.SerializeObject(user.Data),
                 Status = user.Status,
             };
@@ -42,7 +40,6 @@ namespace GreenVerticalBot.Users
                 CreationTime = DateTimeOffset.FromUnixTimeSeconds(userEntity.CreationTime),
                 LastAccessTime = DateTimeOffset.FromUnixTimeSeconds(userEntity.LastAccessTime),
                 Claims = JsonConvert.DeserializeObject<List<BotClaim>>(userEntity.Claims),
-                Building = userEntity.Building,
                 Data = JsonConvert.DeserializeObject<UserData>(userEntity.Data),
                 Status = userEntity.Status,
             };

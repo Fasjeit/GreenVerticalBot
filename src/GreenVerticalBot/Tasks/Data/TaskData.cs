@@ -1,28 +1,32 @@
-﻿using GreenVerticalBot.Authorization;
-using GreenVerticalBot.Users;
-using Newtonsoft.Json.Linq;
+﻿using GreenVerticalBot.EntityFramework.Entities.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace GreenVerticalBot.Tasks.Data
 {
-    internal class TaskData : Dictionary<string, object>
+    internal class TaskData
     {
-        public TaskData()
+        [JsonConverter(typeof(StringEnumConverter))]
+        public virtual TaskType Type { get; protected set; } = TaskType.NoType;
+
+        public static Type GetDataType(TaskType taskType)
         {
+            return taskType switch
+            {
+                TaskType.RequestChatAccess => typeof(RequestChatAccessData),
+                TaskType.RequestClaim => typeof(RequestClaimTaskData),
+                _ => typeof(TaskData),
+            };
         }
 
-        public TaskData(Dictionary<string, object> dictionary)
-            : base(dictionary)
+        internal RequestClaimTaskData ToRequestClaimTaskData()
         {
+            return (RequestClaimTaskData)this;
         }
 
-        public RequestChatAccessData ToRequestChatAccessData()
+        internal RequestChatAccessData ToRequestChatAccessData()
         {
-            return new RequestChatAccessData(this);
-        }
-
-        public RequestClaimTaskData ToRequestClaimTaskData()
-        {
-            return new RequestClaimTaskData(this);
+            return (RequestChatAccessData)this;
         }
     }
 }

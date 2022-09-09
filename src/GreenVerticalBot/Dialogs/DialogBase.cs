@@ -20,10 +20,19 @@ namespace GreenVerticalBot.Dialogs
         /// </summary>
         protected BotConfiguration Config { get; set; }
 
+        /// <summary>
+        /// Логгер
+        /// </summary>
         protected ILogger<DialogBase> Logger { get; set; }
 
+        /// <summary>
+        /// Менеджер пользователей
+        /// </summary>
         private IUserManager userManager { get; set; }
 
+        /// <summary>
+        /// Контекст диалога
+        /// </summary>
         public DialogContext Context { get; protected set; }
 
         /// <summary>
@@ -64,10 +73,32 @@ namespace GreenVerticalBot.Dialogs
             await this.ProcessUpdateCoreAsync(botClient, update, cancellationToken);
         }
 
-        internal abstract Task ProcessUpdateCoreAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken);
+        /// <summary>
+        /// Обработка сообщения реализацией диалога
+        /// </summary>
+        /// <param name="botClient"></param>
+        /// <param name="update"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        internal abstract Task ProcessUpdateCoreAsync(
+            ITelegramBotClient botClient, 
+            Update update, 
+            CancellationToken cancellationToken);
 
+        /// <summary>
+        /// Сброс состояние диалога в начальное
+        /// </summary>
+        /// <returns></returns>
         public abstract Task ResetStateAsync();
 
+        /// <summary>
+        /// Заполнить контекст диалога на основе текущий данных
+        /// </summary>
+        /// <param name="botClient"></param>
+        /// <param name="update"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
         public async Task SetDialogContextAsync(
             ITelegramBotClient botClient,
             Update update,
@@ -79,12 +110,17 @@ namespace GreenVerticalBot.Dialogs
             //    return;
             //}
 
+            if (update?.Message?.Chat == null)
+            {
+                throw new ArgumentNullException(nameof(update.Message));
+            }
+
             var userId = DialogBase.GetUserId(update);
             var user = await this.userManager.GetUserByTelegramIdAsync(userId);
             if (user != null &&
                 user.LastAccessTime < DateTime.UtcNow - TimeSpan.FromMinutes(1))
             {
-                // Если пользователь был активен более бинуты назад - обновляем время активности
+                // Если пользователь был активен более минуты назад - обновляем время активности
                 user.LastAccessTime = DateTimeOffset.UtcNow;
                 await this.userManager.UpdateUserAsync(user);
             }
@@ -93,9 +129,9 @@ namespace GreenVerticalBot.Dialogs
             this.Context.Update = update;
             this.Context.User = user;
             this.Context.TelegramUserId = userId;
-            this.Context.ChatId = update?.Message?.Chat?.Id;
+            this.Context.ChatId = update!.Message!.Chat.Id;
             this.Context.CancellationToken = cancellationToken;
-            this.Context.Claims = user?.Claims ?? new List<Authorization.BotClaim>();
+            this.Context.Claims = user?.Claims ?? new List<BotClaim>();
 
             // Выставляем админсткие Claims из конфига
             var userid = this.Context.TelegramUserId.ToString();
@@ -115,6 +151,12 @@ namespace GreenVerticalBot.Dialogs
             }
         }
 
+        /// <summary>
+        /// Получить идентификатор пользователя из сообщения
+        /// </summary>
+        /// <param name="update"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public static long GetUserId(Update update)
         {
             var userId =
@@ -127,6 +169,12 @@ namespace GreenVerticalBot.Dialogs
             return (long)userId;
         }
 
+        /// <summary>
+        /// Получить идентификатор чата из сообщения
+        /// </summary>
+        /// <param name="update"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public static long GetDialogId(Update update)
         {
             var chatId =
@@ -138,6 +186,11 @@ namespace GreenVerticalBot.Dialogs
             return (long)chatId;
         }
 
+        /// <summary>
+        /// Является ли данное сообщение сообщением в групповом чате
+        /// </summary>
+        /// <param name="update"></param>
+        /// <returns></returns>
         public static bool IsGroupMessage(Update update) => update?.Message?.Chat?.Id != update?.Message?.From?.Id;
     }
 }

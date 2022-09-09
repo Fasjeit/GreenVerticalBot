@@ -7,12 +7,7 @@ using GreenVerticalBot.Tasks;
 using GreenVerticalBot.Tasks.Data;
 using GreenVerticalBot.Users;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 using System.Transactions;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -22,9 +17,20 @@ namespace GreenVerticalBot.Dialogs
     [AuthorizeRoles(UserRole.Operator)]
     internal class ApproveDialog : DialogBase
     {
-        ApproveDialogState state;
-        ITaskManager taskManager;
-        IUserManager userManager;
+        /// <summary>
+        /// Состояние диалога
+        /// </summary>
+        private ApproveDialogState state;
+
+        /// <summary>
+        /// Менеджер заопросов
+        /// </summary>
+        private readonly ITaskManager taskManager;
+
+        /// <summary>
+        /// Менеджер пользователей
+        /// </summary>
+        private readonly IUserManager userManager;
 
         public ApproveDialog(
             DialogOrcestrator dialogOrcestrator, 
@@ -61,6 +67,7 @@ namespace GreenVerticalBot.Dialogs
                     
 
                     // #Q_ tmp filter
+                    // only Request claim
                     tasksToApprove = tasksToApprove
                         .Where(
                             tta => tta.Type == EntityFramework.Entities.Tasks.TaskType.RequestClaim)
@@ -68,12 +75,19 @@ namespace GreenVerticalBot.Dialogs
 
                     if (tasksToApprove.Length == 0)
                     {
+                        this.Logger.LogInformation(
+                            $"operator [{StringFormatHelper.GetUserIdForLogs(update)}]: no tasks to approve");
+
                         await botClient.SendTextMessageAsync(
                             chatId: this.Context.TelegramUserId,
                             text: "Нет запросов на подтверждение :)",
                             cancellationToken: cancellationToken);
                         return;
                     }
+
+                    this.Logger.LogInformation($"" +
+                        $"operator [{StringFormatHelper.GetUserIdForLogs(update)}]: begin approve, " +
+                        $"[{tasksToApprove.Length}] tasks left");
 
                     await botClient.SendTextMessageAsync(
                         chatId: this.Context.TelegramUserId,
@@ -89,14 +103,19 @@ namespace GreenVerticalBot.Dialogs
                     var sb = new StringBuilder();
                     sb.AppendLine($"<b> ❓ Запрос [{taskToApprove.Id}]</b>");
                     sb.AppendLine($"<b>Идентификатор объекта</b> [{taskToApprove.LinkedObject}]");
+                    sb.AppendLine($"<b>Отображаемое имя объекта</b> [{data.UserDisplayName}]");
                     sb.AppendLine($"<b>Тип запроса</b> [{taskToApprove.Type.ToDescriptionString()}]");
-                    sb.AppendLine($"<b>Запрашиваемые права:</b>");
-                    foreach (var claim in data.Claims)
+
+                    if (data.Claims != null)
                     {
-                        sb.AppendLine($"*    {Enum.Parse<UserRole>(claim.Value).ToDescriptionString()}");
+                        sb.AppendLine($"<b>Запрашиваемые права:</b>");
+                        foreach (var claim in data.Claims)
+                        {
+                            sb.AppendLine($"*    {Enum.Parse<UserRole>(claim.Value).ToDescriptionString()}");
+                        }
+                        this.Context.ContextDataObject["requested_claims"] = data.Claims;
                     }
 
-                    this.Context.ContextDataObject["requested_claims"] = data.Claims;
                     this.Context.ContextDataString["task_id"] = taskToApprove.Id;
 
                     await botClient.SendTextMessageAsync(
@@ -154,6 +173,19 @@ namespace GreenVerticalBot.Dialogs
                             }
                             
                             var task = await this.taskManager.GetTaskAsync(taskId);
+                            if (task == null)
+                            {
+                                this.Logger.LogInformation(
+                                   $"operator [{StringFormatHelper.GetUserIdForLogs(update)}]: " +
+                                   $"task [{taskId}] is null");
+
+                                // write already approved or rejected
+                                await botClient.SendTextMessageAsync(
+                                    chatId: this.Context.TelegramUserId,
+                                    text: $"Не удалось найти запрос. Возможно он был удалён.",
+                                    cancellationToken: cancellationToken);
+                                return;
+                            }
                             if (task.Status != EntityFramework.Entities.Tasks.StatusFormats.Created)
                             {
                                 this.Logger.LogInformation(
@@ -171,10 +203,7 @@ namespace GreenVerticalBot.Dialogs
                                 return;
                             }
                             task.Status = EntityFramework.Entities.Tasks.StatusFormats.Approved;
-                            task.Data = new RequestClaimTaskData()
-                            {
-                                Claims = newUserClaims,
-                            };
+                            task.Data.ToRequestClaimTaskData().Claims = newUserClaims;
 
                             await this.taskManager.UpdateTaskAsync(task);
 
@@ -238,6 +267,7 @@ namespace GreenVerticalBot.Dialogs
                     }
                     else if (update?.Message?.Text == "/reject")
                     {
+                        this.Logger.LogInformation($"operator [{StringFormatHelper.GetUserIdForLogs(update)}], reject task begin");
                         await botClient.SendTextMessageAsync(
                                 chatId: this.Context.TelegramUserId,
                                 text: $"Опишите причину отклонения, её увидит пользователь",
@@ -265,6 +295,10 @@ namespace GreenVerticalBot.Dialogs
                     var reason = update.Message.Text;
                     var taskId = this.Context.ContextDataString["task_id"];
                     var task = await this.taskManager.GetTaskAsync(taskId);
+                    if (task == null)
+                    {
+                        throw new Exception("task not found!");
+                    }
                     if (task.Status != EntityFramework.Entities.Tasks.StatusFormats.Created)
                     {
                         // write already approved or rejected
@@ -272,11 +306,8 @@ namespace GreenVerticalBot.Dialogs
                         return;
                     }
                     task.Status = EntityFramework.Entities.Tasks.StatusFormats.Declined;
-                    task.Data = new RequestClaimTaskData()
-                    {
-                        Claims = task.Data.ToRequestClaimTaskData().Claims,
-                        Reason = reason, 
-                    };
+
+                    task.Data.ToRequestClaimTaskData().Reason = reason;
 
                     await this.taskManager.UpdateTaskAsync(task);
 

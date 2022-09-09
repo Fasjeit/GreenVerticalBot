@@ -16,7 +16,7 @@ namespace GreenVerticalBot.Dialogs
         public Update Update { get; set; }
         public CancellationToken CancellationToken { get; set; }
         public long TelegramUserId { get; set; }
-        public long? ChatId { get; set; }
+        public long ChatId { get; set; }
         public User? User { get; set; }
         public List<BotClaim> Claims { get; set; } = new List<BotClaim>();
         public bool IsGroupMessage => this.ChatId == this.TelegramUserId;

@@ -18,8 +18,11 @@ namespace GreenVerticalBot.Dialogs
         /// <summary>
         /// Список активных диалогов
         /// </summary>
-        private ConcurrentDictionary<string, (IServiceScope dialogScope, DialogBase dialog)> dialogRecords;
+        private readonly ConcurrentDictionary<string, (IServiceScope dialogScope, DialogBase dialog)> dialogRecords;
 
+        /// <summary>
+        /// Флаг для IDisposeble
+        /// </summary>
         private bool disposedValue;
 
         /// <summary>
@@ -27,8 +30,14 @@ namespace GreenVerticalBot.Dialogs
         /// </summary>
         private readonly IServiceProvider provider;
 
+        /// <summary>
+        /// Логгер
+        /// </summary>
         private readonly ILogger<DialogOrcestrator> logger;
 
+        /// <summary>
+        /// Конфигурация бота
+        /// </summary>
         private readonly BotConfiguration config;
 
         /// <summary>
@@ -85,7 +94,7 @@ namespace GreenVerticalBot.Dialogs
                 return;
             }
 
-            var dialogId = DialogBase.GetDialogId(update).ToString();
+            var dialogId = DialogBase.GetDialogId(update!).ToString();
 
             try
             {
@@ -111,14 +120,14 @@ namespace GreenVerticalBot.Dialogs
                 {
                     // Выставляем конекст диалога
                     var dialog = dialogRecord.dialog;
-                    await dialog.SetDialogContextAsync(botClient, update, cancellationToken);
+                    await dialog.SetDialogContextAsync(botClient, update!, cancellationToken);
 
                     // Проверка авторизации
 
                     bool isAuthorized = await this.AuthorizeAsync(dialog.GetType(), dialog.Context);
                     if (!isAuthorized)
                     {
-                        this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
+                        this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update!)}] " +
                                 $": unauthorized access to [{dialog.GetType().Name}]");
 
                         await botClient.SendTextMessageAsync(
@@ -131,7 +140,7 @@ namespace GreenVerticalBot.Dialogs
                         await this.SwitchToDialogAsync<WellcomeDialog>(
                             dialog.Context.ChatId.ToString(),
                             botClient,
-                            update,
+                            update!,
                             cancellationToken,
                             true);
                         return;
@@ -140,7 +149,7 @@ namespace GreenVerticalBot.Dialogs
                     ///
 
                     // Если сообщение в групповом чате - обрабатываем отдельно в соотв. диалоге
-                    if (DialogBase.IsGroupMessage(update))
+                    if (DialogBase.IsGroupMessage(update!))
                     {
                         if (update?.Message?.Text is string { } text &&
                             text.StartsWith("/"))
@@ -250,14 +259,24 @@ namespace GreenVerticalBot.Dialogs
                             true);
                         return;
                     }
+                    else if (update?.Message?.Text == "/a_logs")
+                    {
+                        await this.SwitchToDialogAsync<LogsDialog>
+                            ($"{dialog.Context.ChatId}",
+                            botClient,
+                            update,
+                            cancellationToken,
+                            true);
+                        return;
+                    }
                 }
 
                 // Обрабатываем сообщение в соответсвующем диалоге
-                await dialogRecord.dialog.ProcessUpdateAsync(botClient, update, cancellationToken);
+                await dialogRecord.dialog.ProcessUpdateAsync(botClient, update!, cancellationToken);
             }
             catch (Exception ex)
             {
-                this.logger.LogCritical($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
+                this.logger.LogCritical($"user [{StringFormatHelper.GetUserIdForLogs(update!)}] " +
                            $": critial error - [{ex.ToString()}]");
 
                 try
@@ -271,7 +290,7 @@ namespace GreenVerticalBot.Dialogs
                 }
                 catch (Exception ex1)
                 {
-                    this.logger.LogCritical($"user [{StringFormatHelper.GetUserIdForLogs(update)}] " +
+                    this.logger.LogCritical($"user [{StringFormatHelper.GetUserIdForLogs(update!)}] " +
                            $": critial error - [{ex1.ToString()}]");
                 }
                 // чистим скоуп, так как там уже не получится прогрузить бд
@@ -384,7 +403,7 @@ namespace GreenVerticalBot.Dialogs
             GC.SuppressFinalize(this);
         }
 
-        private async Task<bool> AuthorizeAsync(
+        private Task<bool> AuthorizeAsync(
             Type dialogType,
             DialogContext context)
         {
@@ -406,7 +425,7 @@ namespace GreenVerticalBot.Dialogs
                                 dc => dc.Value == r.ToString()));
                 }
             }
-            return isAuthorized;
+            return Task.FromResult(isAuthorized);
         }
     }
 }

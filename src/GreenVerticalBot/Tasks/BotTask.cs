@@ -33,13 +33,16 @@ namespace GreenVerticalBot.Tasks
 
         public static BotTask ToTask(this TaskEntity taskEntity)
         {
+            var taskType = Enum.Parse<TaskType>(taskEntity.Type);
+            Type dataType = TaskData.GetDataType(taskType);
+
             return new BotTask()
             {
                 Id = taskEntity.Id,
                 Type = Enum.Parse<TaskType>(taskEntity.Type),
                 CreationTime = DateTimeOffset.FromUnixTimeSeconds(taskEntity.CreationTime),
                 UpdateTime = DateTimeOffset.FromUnixTimeSeconds(taskEntity.UpdateTime),
-                Data = JsonConvert.DeserializeObject<TaskData>(taskEntity.Data),
+                Data = (TaskData)JsonConvert.DeserializeObject(taskEntity.Data, dataType),
                 Status = Enum.Parse<StatusFormats>(taskEntity.Status),
                 LinkedObject = taskEntity.LinkedObject,
             };
