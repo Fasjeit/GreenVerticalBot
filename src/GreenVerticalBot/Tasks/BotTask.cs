@@ -11,7 +11,7 @@ namespace GreenVerticalBot.Tasks
         public DateTimeOffset CreationTime { get; set; } = DateTimeOffset.UtcNow;
         public DateTimeOffset UpdateTime { get; set; } = DateTimeOffset.UtcNow;
         public TaskData Data { get; set; } = new RequestChatAccessData();
-        public StatusFormats Status { get; set; } = StatusFormats.Created;
+        public TaskStatusFormats Status { get; set; } = TaskStatusFormats.Created;
         public string? LinkedObject { get; set; }
     }
 
@@ -43,7 +43,7 @@ namespace GreenVerticalBot.Tasks
                 CreationTime = DateTimeOffset.FromUnixTimeSeconds(taskEntity.CreationTime),
                 UpdateTime = DateTimeOffset.FromUnixTimeSeconds(taskEntity.UpdateTime),
                 Data = (TaskData)JsonConvert.DeserializeObject(taskEntity.Data, dataType),
-                Status = Enum.Parse<StatusFormats>(taskEntity.Status),
+                Status = Enum.Parse<TaskStatusFormats>(taskEntity.Status),
                 LinkedObject = taskEntity.LinkedObject,
             };
         }

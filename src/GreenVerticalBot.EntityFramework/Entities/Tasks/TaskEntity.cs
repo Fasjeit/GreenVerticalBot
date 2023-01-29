@@ -13,7 +13,7 @@ namespace GreenVerticalBot.EntityFramework.Entities.Tasks
         public long CreationTime { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         public long UpdateTime { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         public string Data { get; set; } = "{}";
-        public string Status { get; set; } = StatusFormats.Created.ToString();
+        public string Status { get; set; } = TaskStatusFormats.Created.ToString();
         public string? LinkedObject { get; set; }
     }
 }

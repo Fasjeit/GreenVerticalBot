@@ -1,7 +1,7 @@
 ﻿namespace GreenVerticalBot.EntityFramework
 {
-    using GreenVerticalBot.EntityFramework.Entities;
     using GreenVerticalBot.EntityFramework.Entities.Tasks;
+    using GreenVerticalBot.EntityFramework.Entities.Users;
     using Microsoft.EntityFrameworkCore;
     using System.Diagnostics.CodeAnalysis;
 

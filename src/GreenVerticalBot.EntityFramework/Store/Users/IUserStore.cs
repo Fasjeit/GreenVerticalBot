@@ -1,6 +1,6 @@
-﻿using GreenVerticalBot.EntityFramework.Entities;
+﻿using GreenVerticalBot.EntityFramework.Entities.Users;
 
-namespace GreenVerticalBot.EntityFramework.Store.User
+namespace GreenVerticalBot.EntityFramework.Store.Users
 {
     public interface IUserStore
     {

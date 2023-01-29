@@ -1,9 +1,7 @@
 ﻿using GreenVerticalBot.Authorization;
 using GreenVerticalBot.Configuration;
-using GreenVerticalBot.EntityFramework.Entities.Tasks;
 using GreenVerticalBot.Helpers;
 using GreenVerticalBot.Tasks;
-using GreenVerticalBot.Tasks.Data;
 using GreenVerticalBot.Users;
 using Microsoft.Extensions.Logging;
 using System.Text;
@@ -63,11 +61,26 @@ namespace GreenVerticalBot.Dialogs
 
 
                     var sb = new StringBuilder();
-                    sb.AppendLine("Выберите Чат для регистрации:");
+                    sb.AppendLine("Выберите чат для получения доступа:");
                     sb.AppendLine();
+
+                    bool anyChats = false;
                     foreach (var chat in this.Config.ChatInfos)
                     {
-                        sb.AppendLine($"/{chat.Key} {chat.Value.FriendlyName}");
+                        if (this.Context.Claims.HasAllRolles(chat.Value.RequredClaims))
+                        {
+                            anyChats = true;
+                            sb.AppendLine($"/{chat.Key} {chat.Value.FriendlyName}");
+                        }
+                    }
+
+                    if (!anyChats)
+                    {
+                        await botClient.SendTextMessageAsync(
+                            chatId: update.Message.Chat.Id,
+                            text: "Нет доступных чатов. Воспользуйтесь командой /authenticate для получения прав.",
+                            cancellationToken: cancellationToken);
+                        return;
                     }
 
                     this.Logger.LogInformation($"user [{StringFormatHelper.GetUserIdForLogs(update)}]: begin authorize");
@@ -85,6 +98,10 @@ namespace GreenVerticalBot.Dialogs
                 case AuthorizeDialogState.SelectAuthorizationTarget:
                 {
                     var requestedChat = update?.Message?.Text;
+                    if (requestedChat == null)
+                    {
+                        return;
+                    }
                     if (!this.Config.ChatInfos.TryGetValue($"{requestedChat.Substring(1)}", out var chat))
                     {
                         return;
@@ -103,6 +120,7 @@ namespace GreenVerticalBot.Dialogs
                                 $"Требуются права:[{string.Join(',', chat.RequredClaims.Select(rc => rc.ToString()))}]",
                             parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
                             cancellationToken: cancellationToken);
+
                         await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
                             this.Context.TelegramUserId.ToString(),
                             botClient,
@@ -115,62 +133,27 @@ namespace GreenVerticalBot.Dialogs
                     // проверяем, есть ли инвайт
                     var userInvite = this.Context.User.Data.Invites.FirstOrDefault(
                         i => 
-                        i.Id == StringFormatHelper.GetInviteString(
-                            update.Message.From.Username,
-                            this.Context.TelegramUserId.ToString(),
-                            chat.ChatId));
+                            i.Id == StringFormatHelper.GetInviteString(
+                                update.Message.From.Username,
+                                this.Context.TelegramUserId.ToString(),
+                                chat.ChatId));
 
                     if (userInvite == null)
                     {
-                        // Генерим инвайт линк на 1 использование
-                        // NB. В идеале надо запоминать номер регистрации, id пользователя и инвайт.
-                        // Если такой номер уже был - просто выдавать старый инвайт, а не генерить новый.
-
-                        // Создаём задачу в бд
-                        var task = new BotTask()
-                        {
-                            Status = StatusFormats.Approved,
-                            LinkedObject = this.Context.TelegramUserId.ToString(),
-                            Type = TaskType.RequestClaim,
-                        };
-
-                        var inviteLink = await botClient.CreateChatInviteLinkAsync(
-                            new ChatId(
-                                chat.ChatId),
-                            name: StringFormatHelper.GetInviteString(
-                                update.Message.From.Username,
-                                this.Context.TelegramUserId.ToString(),
-                                chat.ChatId),
-                            memberLimit: 1);
-
-                        // ставим линк и делаем запись в бд
-                        task.Data = new RequestChatAccessData() { ChatId = chat.ChatId, InviteLink = inviteLink.InviteLink };
-                        await this.taskManager.AddTaskAsync(task);
-
-                        // Перезаписываем, так как там оболочка вокруг словаря
-                        var user = await this.userManager.GetUserByTelegramIdAsync(this.Context.TelegramUserId);
-
-                        var invites = user.Data.Invites;
-                        userInvite = new Invite()
-                        {
-                            Id = $"{inviteLink.Name}",
-                            Despription = $"Приглашение в [{chat.FriendlyName}]",
-                            Value = $"{inviteLink.InviteLink}"
-                        };
-
-                        invites.Add(userInvite);
-                        user.Data.Invites = invites;
-
-                        await this.userManager.UpdateUserAsync(user);
-
-                        this.Logger.LogInformation($"user [{StringFormatHelper.GetUserIdForLogs(update)}] : " +
-                            $"new invite link generated [{inviteLink.Name} | value: {inviteLink.InviteLink}]");
+                        // инвайта нет - создаём инвайт и таск
+                        userInvite = await this.taskManager.CreateApprovedInviteTask(
+                            botClient,
+                            this.Context.User,
+                            update,
+                            chat);
                     }
 
                     // Отправляем инвайт
                     Message sentMessage = await botClient.SendTextMessageAsync(
                         chatId: this.Context.TelegramUserId,
-                        text: $"{userInvite.Value}",
+                        text: $"<b>Ссылка для присоединения к чату:</b>{Environment.NewLine}" +
+                        $"{userInvite.Value}",
+                        parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
                         cancellationToken: cancellationToken);
 
                     await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(

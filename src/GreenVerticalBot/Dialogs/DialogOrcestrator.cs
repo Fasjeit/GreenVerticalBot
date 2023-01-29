@@ -4,7 +4,6 @@ using GreenVerticalBot.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using System.Security.Claims;
 using Telegram.Bot;
 using Update = Telegram.Bot.Types.Update;
 
@@ -94,8 +93,17 @@ namespace GreenVerticalBot.Dialogs
                 return;
             }
 
-            var dialogId = DialogBase.GetDialogId(update!).ToString();
+            // Если сообщение в групповом чате и это не команда - игнорим
+            if (DialogBase.IsGroupMessage(update!))
+            {
+                if (!(update?.Message?.Text is string { } text ) ||
+                    !text.StartsWith("/"))
+                {
+                    return;
+                }
+            }
 
+            var dialogId = DialogBase.GetDialogId(update!).ToString();
             try
             {
                 // Проверяем, есть ли активный диалог
@@ -109,167 +117,167 @@ namespace GreenVerticalBot.Dialogs
                     // Создаём провайдер в рамках scope
                     var serviceProvider = dialogScope.ServiceProvider;
 
-                    var dialog = serviceProvider.GetRequiredService<WellcomeDialog>();
+                    var dialogNew = serviceProvider.GetRequiredService<WellcomeDialog>();
 
                     // Создаём запись о диалоге
-                    dialogRecord = (dialogScope, dialog);
+                    dialogRecord = (dialogScope, dialogNew);
 
                     this.dialogRecords[dialogId] = dialogRecord;
                 }
 
+
+                // Выставляем конекст диалога
+                var dialog = dialogRecord.dialog;
+                await dialog.SetDialogContextAsync(botClient, update!, cancellationToken);
+
+                // Проверка авторизации
+
+                bool isAuthorized = await this.AuthorizeAsync(dialog.GetType(), dialog.Context);
+                if (!isAuthorized)
                 {
-                    // Выставляем конекст диалога
-                    var dialog = dialogRecord.dialog;
-                    await dialog.SetDialogContextAsync(botClient, update!, cancellationToken);
+                    this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update!)}] " +
+                            $": unauthorized access to [{dialog.GetType().Name}]");
 
-                    // Проверка авторизации
+                    await botClient.SendTextMessageAsync(
+                        chatId: dialog.Context.ChatId,
+                        text:
+                            $"Доступ запрещён.",
+                        parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
+                        cancellationToken: cancellationToken);
 
-                    bool isAuthorized = await this.AuthorizeAsync(dialog.GetType(), dialog.Context);
-                    if (!isAuthorized)
-                    {
-                        this.logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update!)}] " +
-                                $": unauthorized access to [{dialog.GetType().Name}]");
-
-                        await botClient.SendTextMessageAsync(
-                            chatId: dialog.Context.ChatId,
-                            text:
-                                $"Доступ запрещён.",
-                            parseMode: Telegram.Bot.Types.Enums.ParseMode.Markdown,
-                            cancellationToken: cancellationToken);
-
-                        await this.SwitchToDialogAsync<WellcomeDialog>(
-                            dialog.Context.ChatId.ToString(),
-                            botClient,
-                            update!,
-                            cancellationToken,
-                            true);
-                        return;
-                    }
-
-                    ///
-
-                    // Если сообщение в групповом чате - обрабатываем отдельно в соотв. диалоге
-                    if (DialogBase.IsGroupMessage(update!))
-                    {
-                        if (update?.Message?.Text is string { } text &&
-                            text.StartsWith("/"))
-                        {
-                            await this.SwitchToDialogAsync<GroupDialog>
-                                ($"{dialog.Context.ChatId}",
-                                botClient,
-                                update,
-                                cancellationToken,
-                                true);
-                        }
-                        return;
-                    }
-
-
-                    ///
-
-                    if (update?.Message?.Text == "/authenticate")
-                    {
-                        await this.SwitchToDialogAsync<AuthenticateDialog>
-                            ($"{dialog.Context.ChatId}",
-                            botClient,
-                            update,
-                            cancellationToken,
-                            true);
-                        return;
-                    }
-                    else if (update?.Message?.Text == "/user")
-                    {
-                        await this.SwitchToDialogAsync<UserInfoDialog>
-                            ($"{dialog.Context.ChatId}",
-                            botClient,
-                            update,
-                            cancellationToken,
-                            true);
-                        return;
-                    }
-                    else if (update?.Message?.Text == "/authorize")
-                    {
-                        await this.SwitchToDialogAsync<AuthorizeDialog>
-                            ($"{dialog.Context.ChatId}",
-                            botClient,
-                            update,
-                            cancellationToken,
-                            true);
-                        return;
-                    }
-                    else if (update?.Message?.Text == "/help")
-                    {
-                        await this.SwitchToDialogAsync<WellcomeDialog>
-                            ($"{dialog.Context.ChatId}",
-                            botClient,
-                            update,
-                            cancellationToken,
-                            true);
-                        return;
-                    }
-                    else if (update?.Message?.Text == "/tasks")
-                    {
-                        await this.SwitchToDialogAsync<TasksInfoDialog>
-                            ($"{dialog.Context.ChatId}",
-                            botClient,
-                            update,
-                            cancellationToken,
-                            true);
-                        return;
-                    }
-                    else if (update?.Message?.Text == "/o_approve")
-                    {
-                        await this.SwitchToDialogAsync<ApproveDialog>
-                            ($"{dialog.Context.ChatId}",
-                            botClient,
-                            update,
-                            cancellationToken,
-                            true);
-                        return;
-                    }
-                    else if (
-                        update?.Message?.Text != null &&
-                        update.Message.Text.StartsWith("/qr"))
-                    {
-                        await this.SwitchToDialogAsync<QrDialog>
-                            ($"{dialog.Context.ChatId}",
-                            botClient,
-                            update,
-                            cancellationToken,
-                            true);
-                        return;
-                    }
-                    else if (update?.Message?.Text == "/a_userlookup")
-                    {
-                        await this.SwitchToDialogAsync<UserLookUpDialog>
-                            ($"{dialog.Context.ChatId}",
-                            botClient,
-                            update,
-                            cancellationToken,
-                            true);
-                        return;
-                    }
-                    else if (update?.Message?.Text == "/a_status")
-                    {
-                        await this.SwitchToDialogAsync<ShowStatusDialog>
-                            ($"{dialog.Context.ChatId}",
-                            botClient,
-                            update,
-                            cancellationToken,
-                            true);
-                        return;
-                    }
-                    else if (update?.Message?.Text == "/a_logs")
-                    {
-                        await this.SwitchToDialogAsync<LogsDialog>
-                            ($"{dialog.Context.ChatId}",
-                            botClient,
-                            update,
-                            cancellationToken,
-                            true);
-                        return;
-                    }
+                    await this.SwitchToDialogAsync<WellcomeDialog>(
+                        dialog.Context.ChatId.ToString(),
+                        botClient,
+                        update!,
+                        cancellationToken,
+                        true);
+                    return;
                 }
+
+                ///
+
+                // Если сообщение в групповом чате - обрабатываем отдельно в соотв. диалоге
+                if (DialogBase.IsGroupMessage(update!))
+                {
+                    if (update?.Message?.Text is string { } text &&
+                        text.StartsWith("/"))
+                    {
+                        await this.SwitchToDialogAsync<GroupDialog>
+                            ($"{dialog.Context.ChatId}",
+                            botClient,
+                            update,
+                            cancellationToken,
+                            true);
+                    }
+                    return;
+                }
+
+
+                ///
+
+                if (update?.Message?.Text == "/authenticate")
+                {
+                    await this.SwitchToDialogAsync<AuthenticateDialog>
+                        ($"{dialog.Context.ChatId}",
+                        botClient,
+                        update,
+                        cancellationToken,
+                        true);
+                    return;
+                }
+                else if (update?.Message?.Text == "/user")
+                {
+                    await this.SwitchToDialogAsync<UserInfoDialog>
+                        ($"{dialog.Context.ChatId}",
+                        botClient,
+                        update,
+                        cancellationToken,
+                        true);
+                    return;
+                }
+                else if (update?.Message?.Text == "/authorize")
+                {
+                    await this.SwitchToDialogAsync<AuthorizeDialog>
+                        ($"{dialog.Context.ChatId}",
+                        botClient,
+                        update,
+                        cancellationToken,
+                        true);
+                    return;
+                }
+                else if (update?.Message?.Text == "/help")
+                {
+                    await this.SwitchToDialogAsync<WellcomeDialog>
+                        ($"{dialog.Context.ChatId}",
+                        botClient,
+                        update,
+                        cancellationToken,
+                        true);
+                    return;
+                }
+                else if (update?.Message?.Text == "/tasks")
+                {
+                    await this.SwitchToDialogAsync<TasksInfoDialog>
+                        ($"{dialog.Context.ChatId}",
+                        botClient,
+                        update,
+                        cancellationToken,
+                        true);
+                    return;
+                }
+                else if (update?.Message?.Text == "/o_approve")
+                {
+                    await this.SwitchToDialogAsync<ApproveDialog>
+                        ($"{dialog.Context.ChatId}",
+                        botClient,
+                        update,
+                        cancellationToken,
+                        true);
+                    return;
+                }
+                else if (
+                    update?.Message?.Text != null &&
+                    update.Message.Text.StartsWith("/qr"))
+                {
+                    await this.SwitchToDialogAsync<QrDialog>
+                        ($"{dialog.Context.ChatId}",
+                        botClient,
+                        update,
+                        cancellationToken,
+                        true);
+                    return;
+                }
+                else if (update?.Message?.Text == "/a_userlookup")
+                {
+                    await this.SwitchToDialogAsync<UserLookUpDialog>
+                        ($"{dialog.Context.ChatId}",
+                        botClient,
+                        update,
+                        cancellationToken,
+                        true);
+                    return;
+                }
+                else if (update?.Message?.Text == "/a_status")
+                {
+                    await this.SwitchToDialogAsync<ShowStatusDialog>
+                        ($"{dialog.Context.ChatId}",
+                        botClient,
+                        update,
+                        cancellationToken,
+                        true);
+                    return;
+                }
+                else if (update?.Message?.Text == "/a_logs")
+                {
+                    await this.SwitchToDialogAsync<LogsDialog>
+                        ($"{dialog.Context.ChatId}",
+                        botClient,
+                        update,
+                        cancellationToken,
+                        true);
+                    return;
+                }
+
 
                 // Обрабатываем сообщение в соответсвующем диалоге
                 await dialogRecord.dialog.ProcessUpdateAsync(botClient, update!, cancellationToken);
@@ -308,8 +316,13 @@ namespace GreenVerticalBot.Dialogs
         {
             if (!this.dialogRecords.ContainsKey(dialogId))
             {
+                // В идеале не должны сюда попасть
+                // поступил запрос на смену диалога - но записи 
+                // о диалоге с пользователем нет. 
+                // Возможная ситуация - перезапуск бота.
+                // Ничего не делаем, сл. запросом будет перепинуто
+                // на начальный диалог
                 return;
-                // TODO reset scope!!!!
             }
             var dialog = this.dialogRecords[dialogId].dialog;
 
@@ -382,19 +395,9 @@ namespace GreenVerticalBot.Dialogs
                         dialog.dialogScope.Dispose();
                     }
                 }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
                 disposedValue = true;
             }
         }
-
-        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-        // ~DialogOrcestrator()
-        // {
-        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        //     Dispose(disposing: false);
-        // }
 
         public void Dispose()
         {

@@ -1,18 +1,46 @@
 ﻿using GreenVerticalBot.Authorization;
-using GreenVerticalBot.EntityFramework.Entities;
+using GreenVerticalBot.EntityFramework.Entities.Users;
+using GreenVerticalBot.Users.Data;
 using Newtonsoft.Json;
 
 namespace GreenVerticalBot.Users
 {
     internal class User
     {
+        /// <summary>
+        /// Идентификатор пользователя в бд
+        /// </summary>
         public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        /// <summary>
+        /// Идентификатор пользоватьеля в телеграме
+        /// </summary>
         public long TelegramId { get; set; } = 0;
+
+        /// <summary>
+        /// Дата создания пользователя
+        /// </summary>
         public DateTimeOffset CreationTime { get; set; } = DateTimeOffset.UtcNow;
+
+        /// <summary>
+        /// Дата последнего обращения ползователя с точностью до минуты
+        /// </summary>
         public DateTimeOffset LastAccessTime { get; set; } = DateTimeOffset.UtcNow;
+
+        /// <summary>
+        /// Утверждения пользователя
+        /// </summary>
         public List<BotClaim> Claims { get; set; } = new List<BotClaim>();
+
+        /// <summary>
+        /// Прочие данные пользователя
+        /// </summary>
         public UserData Data { get; set; } = new();
-        public string Status { get; set; } = UserEntity.StatusFormats.Active;
+
+        /// <summary>
+        /// Статус пользователя
+        /// </summary>
+        public string Status { get; set; } = UserStatusFormats.Active;
     }
 
     internal static class UserExtensions

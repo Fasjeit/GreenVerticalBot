@@ -1,7 +1,7 @@
-﻿using GreenVerticalBot.EntityFramework.Entities;
+﻿using GreenVerticalBot.EntityFramework.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 
-namespace GreenVerticalBot.EntityFramework.Store.User
+namespace GreenVerticalBot.EntityFramework.Store.Users
 {
     public class UserStore : IUserStore
     {

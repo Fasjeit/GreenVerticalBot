@@ -3,11 +3,13 @@ using GreenVerticalBot.Configuration;
 using GreenVerticalBot.Dialogs;
 using GreenVerticalBot.EntityFramework;
 using GreenVerticalBot.EntityFramework.Store.Tasks;
-using GreenVerticalBot.EntityFramework.Store.User;
+using GreenVerticalBot.EntityFramework.Store.Users;
+using GreenVerticalBot.Logging;
 using GreenVerticalBot.Monitoring;
 using GreenVerticalBot.Tasks;
 using GreenVerticalBot.Users;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -18,10 +20,31 @@ namespace GreenVerticalBot
     {
         public static async Task RunHost()
         {
-            var builder = Host.CreateDefaultBuilder()
-                .UseSerilog();
+            var builder = Host.CreateDefaultBuilder();
 
-            //var config = await BotConfiguration.GetConfigAsync();
+            builder.UseSerilog((hostingContext, loggerConfiguration) =>
+            {
+                loggerConfiguration
+                    .ReadFrom.Configuration(hostingContext.Configuration)
+                    .Enrich.FromLogContext()
+                    .WriteTo.Console(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{SourceContext}] [{Level}] {Message}{NewLine}{Exception}")
+                    .WriteTo.File("bot_log.txt", rollingInterval: RollingInterval.Day, shared: true)
+                    .WriteTo.Sink(new InMemorySink());
+            });
+
+            builder.ConfigureAppConfiguration((hostingContext, configuration) =>
+            {
+                configuration.Sources.Clear();
+
+                configuration.SetBasePath(Directory.GetCurrentDirectory())
+#if DEV
+                .AddJsonFile("appsettings.Development.json", optional: false)
+#else
+                .AddJsonFile("appsettings.json", optional: false)
+#endif
+                //.AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", true)
+                .Build();
+            });
 
             builder.ConfigureServices(
                 (context, services) =>
@@ -75,19 +98,19 @@ namespace GreenVerticalBot
 
             using (var host = builder.Build())
             {
-                await MainRutine(host.Services, "Scope 2");
-
-                await host.RunAsync();
+                var cts = new CancellationTokenSource();
+                await MainRutine(host.Services, cts.Token);
+                await host.RunAsync(cts.Token);
             }
         }
 
-        private static async Task MainRutine(IServiceProvider services, string scope)
+        private static async Task MainRutine(IServiceProvider services, CancellationToken cnsToken)
         {
             using IServiceScope serviceScope = services.CreateScope();
             IServiceProvider provider = serviceScope.ServiceProvider;
 
             var bot = provider.GetRequiredService<GreenBot>();
-            await bot.MainRutine();
+            await bot.MainRutine(cnsToken);
         }
     }
 }

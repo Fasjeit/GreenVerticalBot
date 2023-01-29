@@ -49,7 +49,7 @@ namespace GreenVerticalBot.EntityFramework.Store.Tasks
 
         public Task<TaskEntity[]> GetToApproveTasks()
         {
-            return this.tasksStore.EntitySetNoTracking.Where(t => t.Status == StatusFormats.Created.ToString()).ToArrayAsync();
+            return this.tasksStore.EntitySetNoTracking.Where(t => t.Status == TaskStatusFormats.Created.ToString()).ToArrayAsync();
         }
     }
 }

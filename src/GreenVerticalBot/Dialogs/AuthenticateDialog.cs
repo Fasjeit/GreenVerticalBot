@@ -1,7 +1,7 @@
 ﻿using GreenVerticalBot.Authorization;
 using GreenVerticalBot.Configuration;
-using GreenVerticalBot.EntityFramework.Entities;
 using GreenVerticalBot.EntityFramework.Entities.Tasks;
+using GreenVerticalBot.EntityFramework.Entities.Users;
 using GreenVerticalBot.Helpers;
 using GreenVerticalBot.RestModels;
 using GreenVerticalBot.Tasks;
@@ -83,7 +83,7 @@ namespace GreenVerticalBot.Dialogs
                     await botClient.SendTextMessageAsync(
                         chatId: this.Context.ChatId,
                         text:
-                            //$"Выберите способы регистации:{Environment.NewLine}{Environment.NewLine}" +
+                            $"Выберите способы регистации:{Environment.NewLine}{Environment.NewLine}" +
                             //$"* /rosreestr Штамп о регистрации ДДУ в Росреестре{Environment.NewLine}" +
                             //$"Получение прав: [ Житель жк ] {Environment.NewLine}{Environment.NewLine}" +
                             $"* /etc Прочий документ, подтверждающий владение{Environment.NewLine}" +
@@ -194,7 +194,7 @@ namespace GreenVerticalBot.Dialogs
                     {
                         Message error = await botClient.SendTextMessageAsync(
                            chatId: this.Context.ChatId,
-                           text: $"Некооректный документ",
+                           text: $"Некорректный документ",
                            cancellationToken: cancellationToken);
                         this.Logger.LogError($"user [{StringFormatHelper.GetUserIdForLogs(update)}]: invalid doc, [{exception}]");
                         return;
@@ -304,7 +304,7 @@ namespace GreenVerticalBot.Dialogs
                     // Создаём запись об успешной задаче выдаче утверждения
                     var task = new BotTask()
                     {
-                        Status = StatusFormats.Approved,
+                        Status = TaskStatusFormats.Approved,
                         LinkedObject = this.Context.TelegramUserId.ToString(),
                         Type = TaskType.RequestClaim,
                         Data = new RequestClaimTaskData()
@@ -321,7 +321,7 @@ namespace GreenVerticalBot.Dialogs
                         {
                             TelegramId = userId,
                             Claims = claims,
-                            Status = UserEntity.StatusFormats.Active
+                            Status = UserStatusFormats.Active
                         });
 
                     await botClient.SendTextMessageAsync(
@@ -343,7 +343,7 @@ namespace GreenVerticalBot.Dialogs
                     var userTasks = await this.taskManager.GetTasksByLinkedObjectAsync(
                         this.Context.TelegramUserId.ToString());
                     if (userTasks.Any(t =>
-                        t.Status == StatusFormats.Created &&
+                        t.Status == TaskStatusFormats.Created &&
                         t.Type == TaskType.RequestClaim))
                     {
                         this.Logger.LogInformation($"user [{StringFormatHelper.GetUserIdForLogs(update)}] have already existing task to approve");
@@ -391,7 +391,9 @@ namespace GreenVerticalBot.Dialogs
 
                     await botClient.SendTextMessageAsync(
                             chatId: this.Context.ChatId,
-                            text: $"Приложите файл (дду, выписка из ЕГРН, прочий документ на собственность).",
+                            text: $"Приложите файл в сообщении (дду, выписка из ЕГРН, прочий документ на собственность).{Environment.NewLine}" +
+                            $"Паспортные данные можно скрыть при желании.{Environment.NewLine}" +
+                            $"Если отправляете картинкой - прикрепляйте её как вложение (без сжатия).",
                             cancellationToken: cancellationToken);
 
                     this.state = RegisterDialogState.EtcLoadFile;
@@ -455,7 +457,7 @@ namespace GreenVerticalBot.Dialogs
                     // Создаём задачу на подтверждение
                     var task = new BotTask()
                     {
-                        Status = StatusFormats.Created,
+                        Status = TaskStatusFormats.Created,
                         Type = TaskType.RequestClaim,
                         LinkedObject = this.Context.TelegramUserId.ToString(),
                         Data = new RequestClaimTaskData()
@@ -474,9 +476,31 @@ namespace GreenVerticalBot.Dialogs
                     await botClient.SendTextMessageAsync(
                            chatId: userId,
                            text: $"Запрос зарегистрирован.{Environment.NewLine}" +
-                           $"За стутсусом запроса можно следить через команду /tasks",
+                           $"За статусом запроса можно следить через команду /tasks",
                            cancellationToken: cancellationToken,
                            replyMarkup: new ReplyKeyboardRemove());
+
+                    // Оповещаем операторов
+                    foreach (var requiredRoleToApprove in requestedChat.ShouldBeApprovedByAny) 
+                    {
+                        var operatorIdsToNotify = await this.userManager.GetUsersIdWithRoleFromExtraClaimsAsync(requiredRoleToApprove);
+                        foreach (var operatorId in operatorIdsToNotify)
+                        {
+                            try
+                            {
+                                await botClient.SendTextMessageAsync(
+                                   chatId: operatorId,
+                                   text: $"Поступил новый запрос на подтверждение.{Environment.NewLine}" +
+                                   $"Для подтверждения запроса используйте команду /o_approve",
+                                   cancellationToken: cancellationToken,
+                                   replyMarkup: new ReplyKeyboardRemove());
+                            }
+                            catch (Exception ex)
+                            {
+                                this.Logger.LogError($"Cannot notify operator [{operatorId}]: {ex}");
+                            }
+                        }
+                    }
 
                     await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
                         this.Context.ChatId.ToString(), 
@@ -516,12 +540,5 @@ namespace GreenVerticalBot.Dialogs
         EtcSelectClaimType,
         EtcUploadFilePromt,
         EtcLoadFile,
-    }
-
-    internal enum AuthenticationType
-    {
-        RosreestrDduStamp = 1,
-        Egnr = 2,
-        ManualAnyDockement,
     }
 }

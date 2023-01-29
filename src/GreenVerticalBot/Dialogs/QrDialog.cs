@@ -1,18 +1,25 @@
-﻿using GreenVerticalBot.Configuration;
+﻿using GreenVerticalBot.Authorization;
+using GreenVerticalBot.Configuration;
 using GreenVerticalBot.Users;
 using Microsoft.Extensions.Logging;
 using Net.Codecrete.QrCodeGenerator;
 using Svg;
-using System.Collections;
 using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 
 namespace GreenVerticalBot.Dialogs
 {
+    [AuthorizeRoles(UserRole.RegisteredUser, UserRole.Operator)]
     internal class QrDialog : DialogBase
     {
-        public QrDialog(DialogOrcestrator dialogOrcestrator, BotConfiguration config, IUserManager userManager, DialogContext context, ILogger<DialogBase> logger) : base(dialogOrcestrator, config, userManager, context, logger)
+        public QrDialog(
+            DialogOrcestrator dialogOrcestrator, 
+            BotConfiguration config, 
+            IUserManager userManager, 
+            DialogContext context, 
+            ILogger<DialogBase> logger) 
+            : base(dialogOrcestrator, config, userManager, context, logger)
         {
         }
 
@@ -23,7 +30,20 @@ namespace GreenVerticalBot.Dialogs
 
         internal override async Task ProcessUpdateCoreAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
-            var data = update.Message.Text;
+            var data = update?.Message?.Text;
+            if (data == null)
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: this.Context.TelegramUserId,
+                    text: "Использование: /qr текст_для_содержимого",
+                    cancellationToken: cancellationToken);
+                await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
+                    this.Context.ChatId.ToString(),
+                    botClient,
+                    update,
+                    cancellationToken);
+                return;
+            }
             data = data.Replace(@"/qr", string.Empty);
             if (data.StartsWith(" "))
             {
@@ -36,6 +56,25 @@ namespace GreenVerticalBot.Dialogs
                     chatId: this.Context.TelegramUserId,
                     text: "Использование: /qr текст_для_содержимого",
                     cancellationToken: cancellationToken);
+                await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
+                    this.Context.ChatId.ToString(),
+                    botClient,
+                    update,
+                    cancellationToken);
+                return;
+            }
+
+            if (data.Length > 128)
+            {
+                await botClient.SendTextMessageAsync(
+                    chatId: this.Context.TelegramUserId,
+                    text: "Слишком длинная строка",
+                    cancellationToken: cancellationToken);
+                await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
+                    this.Context.ChatId.ToString(),
+                    botClient,
+                    update,
+                    cancellationToken);
                 return;
             }
 
@@ -58,6 +97,12 @@ namespace GreenVerticalBot.Dialogs
                     }
                 }
             }
+
+            await this.dialogOrcestrator.SwitchToDialogAsync<WellcomeDialog>(
+                this.Context.ChatId.ToString(),
+                botClient,
+                update,
+                cancellationToken);
         }
     }
 }

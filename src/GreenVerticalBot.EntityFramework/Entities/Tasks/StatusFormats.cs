@@ -2,13 +2,13 @@
 
 namespace GreenVerticalBot.EntityFramework.Entities.Tasks
 {
-    public enum StatusFormats
+    public enum TaskStatusFormats
     {
         [Description("Создан, ожидает подтверждения")]
         Created,
-        [Description("Подтверждена")]
+        [Description("Подтвержден")]
         Approved,
-        [Description("Отклонена")]
+        [Description("Отклонен")]
         Declined,
     }
 }

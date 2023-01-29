@@ -1,4 +1,6 @@
-﻿namespace GreenVerticalBot.Users
+﻿using GreenVerticalBot.Authorization;
+
+namespace GreenVerticalBot.Users
 {
     internal interface IUserManager
     {
@@ -29,5 +31,12 @@
         /// <param name="user"></param>
         /// <returns></returns>
         Task UpdateUserAsync(User user);
+
+        /// <summary>
+        /// Получить список пользователей с указанной ролью
+        /// </summary>
+        /// <param name="roles"></param>
+        /// <returns></returns>
+        Task<List<string>> GetUsersIdWithRoleFromExtraClaimsAsync(UserRole role);
     }
 }

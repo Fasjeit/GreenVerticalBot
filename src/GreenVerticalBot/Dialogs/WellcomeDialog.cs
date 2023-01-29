@@ -44,11 +44,12 @@ namespace GreenVerticalBot.Dialogs
             }
 
             var stringBuilder = new StringBuilder();
+            stringBuilder.AppendLine($"🆔 Ваш идентификатор: [{userId}]");
             stringBuilder.AppendLine("Список команд:");
             stringBuilder.AppendLine();
             stringBuilder.AppendLine("/authenticate Регистрация жильца");
             stringBuilder.AppendLine("/user Просмотр профиля");
-            stringBuilder.AppendLine("/authorize Получение доступа к чатам и ресурсам:");
+            stringBuilder.AppendLine("/authorize Получение доступа к чатам и ресурсам");
             stringBuilder.AppendLine("/tasks Вывод списка запросов");
             stringBuilder.AppendLine("/help Вывод списка команд");
             stringBuilder.AppendLine();

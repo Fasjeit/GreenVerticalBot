@@ -1,6 +1,6 @@
 ﻿using GreenVerticalBot.Authorization;
 using GreenVerticalBot.Configuration;
-using GreenVerticalBot.EntityFramework.Entities;
+using GreenVerticalBot.EntityFramework.Entities.Users;
 using GreenVerticalBot.Extensions;
 using GreenVerticalBot.Helpers;
 using GreenVerticalBot.Tasks;
@@ -63,8 +63,7 @@ namespace GreenVerticalBot.Dialogs
                 case ApproveDialogState.Iitial:
                 {
                     var tasksToApprove = await this.taskManager.GetTasksToApproveByRequredClaimAsync(
-                        this.Context.Claims.Select(c => Enum.Parse<UserRole>(c.Value)).ToArray());
-                    
+                        this.Context.Claims.Select(c => Enum.Parse<UserRole>(c.Value)).ToArray());                    
 
                     // #Q_ tmp filter
                     // only Request claim
@@ -191,7 +190,7 @@ namespace GreenVerticalBot.Dialogs
                                     cancellationToken: cancellationToken);
                                 return;
                             }
-                            if (task.Status != EntityFramework.Entities.Tasks.StatusFormats.Created)
+                            if (task.Status != EntityFramework.Entities.Tasks.TaskStatusFormats.Created)
                             {
                                 this.Logger.LogInformation(
                                     $"operator [{StringFormatHelper.GetUserIdForLogs(update)}]: " +
@@ -207,7 +206,7 @@ namespace GreenVerticalBot.Dialogs
                                 await this.ProcessUpdateCoreAsync(botClient, update, cancellationToken);
                                 return;
                             }
-                            task.Status = EntityFramework.Entities.Tasks.StatusFormats.Approved;
+                            task.Status = EntityFramework.Entities.Tasks.TaskStatusFormats.Approved;
                             task.Data.ToRequestClaimTaskData().Claims = newUserClaims;
 
                             await this.taskManager.UpdateTaskAsync(task);
@@ -222,7 +221,7 @@ namespace GreenVerticalBot.Dialogs
                                 user = new()
                                 {
                                     TelegramId = long.Parse(task.LinkedObject),
-                                    Status = UserEntity.StatusFormats.Active
+                                    Status = UserStatusFormats.Active
                                 };
                                 await this.userManager.AddUserAsync(user);
 
@@ -260,7 +259,7 @@ namespace GreenVerticalBot.Dialogs
                                 chatId: task.LinkedObject,
                                 text:
                                     $"Ваш запрос [{task.Id}] подтверждён!{Environment.NewLine}" +
-                                    $"Воспользуйтесь комнадой /authenticate для получения доступа",
+                                    $"Воспользуйтесь комнадой /authorize для получения доступа",
                                 cancellationToken: cancellationToken);
 
                             this.state = ApproveDialogState.Iitial;
@@ -304,13 +303,13 @@ namespace GreenVerticalBot.Dialogs
                     {
                         throw new Exception("task not found!");
                     }
-                    if (task.Status != EntityFramework.Entities.Tasks.StatusFormats.Created)
+                    if (task.Status != EntityFramework.Entities.Tasks.TaskStatusFormats.Created)
                     {
                         // write already approved or rejected
                         this.state = ApproveDialogState.Iitial;
                         return;
                     }
-                    task.Status = EntityFramework.Entities.Tasks.StatusFormats.Declined;
+                    task.Status = EntityFramework.Entities.Tasks.TaskStatusFormats.Declined;
 
                     task.Data.ToRequestClaimTaskData().Reason = reason;
 

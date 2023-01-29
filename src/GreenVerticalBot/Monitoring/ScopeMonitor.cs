@@ -1,5 +1,5 @@
 ﻿using GreenVerticalBot.Dialogs;
-using GreenVerticalBot.EntityFramework.Store.User;
+using GreenVerticalBot.EntityFramework.Store.Users;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -124,8 +124,11 @@ namespace GreenVerticalBot.Monitoring
                         .ToUnixTimeSeconds());
 
                 var scopeIdToDelete = activeScopeId.Where(s => !activeUsers.Contains(s)).ToArray();
-                this.dialogOrcestrator.RemoveScopes(scopeIdToDelete);
-                this.logger.LogInformation($"Deleting inactive scopes for users [{string.Join(',', scopeIdToDelete)}]");
+                if (scopeIdToDelete.Length != 0)
+                {
+                    this.dialogOrcestrator.RemoveScopes(scopeIdToDelete);
+                    this.logger.LogInformation($"Deleting inactive scopes for users [{string.Join(',', scopeIdToDelete)}]");
+                }
             }
             catch (Exception ex)
             {

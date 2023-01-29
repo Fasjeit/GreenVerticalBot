@@ -27,7 +27,7 @@ namespace GreenVerticalBot.Bot
             this.logger = logger;
         }
 
-        public async Task MainRutine()
+        public async Task MainRutine(CancellationToken cnsToken)
         {
             // Создаём клиент для общения с api телеграмма
             var botClient = new TelegramBotClient(this.config.BotToken);
@@ -57,7 +57,7 @@ namespace GreenVerticalBot.Bot
                 },
                 BotCommandScope.AllGroupChats());
 
-            using var cts = new CancellationTokenSource();
+           
             // StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.
             var receiverOptions = new ReceiverOptions
             {
@@ -69,18 +69,12 @@ namespace GreenVerticalBot.Bot
                         updateHandler: HandleUpdateAsync,
                         pollingErrorHandler: HandlePollingErrorAsync,
                         receiverOptions: receiverOptions,
-                        cancellationToken: cts.Token
-                    );
+                        cancellationToken: cnsToken
+            );
 
             var me = await botClient.GetMeAsync();
 
             this.logger.LogInformation($"Start listening for @{me.Username}");
-
-            //// Отсанавливаем бота при нажатии enter в консоли
-            //Console.ReadLine();
-
-            //// Send cancellation request to stop bot
-            //cts.Cancel();
 
             async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
             {

@@ -5,6 +5,7 @@ using GreenVerticalBot.Tasks;
 using GreenVerticalBot.Tasks.Data;
 using GreenVerticalBot.Users;
 using Microsoft.Extensions.Logging;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -13,7 +14,10 @@ namespace GreenVerticalBot.Dialogs
 {
     internal class TasksInfoDialog : DialogBase
     {
-        ITaskManager taskManager;
+        private readonly BotConfiguration config;
+
+        private readonly ITaskManager taskManager;
+
         public TasksInfoDialog(
             DialogOrcestrator dialogOrcestrator,
             BotConfiguration config,
@@ -23,6 +27,8 @@ namespace GreenVerticalBot.Dialogs
             ILogger<DialogBase> logger)
             : base(dialogOrcestrator, config, userManager, context, logger)
         {
+            this.config = config
+                ?? throw new ArgumentNullException(nameof(config));
             this.taskManager = taskManager
                 ?? throw new ArgumentNullException(nameof(taskManager));
         }
@@ -43,23 +49,23 @@ namespace GreenVerticalBot.Dialogs
             sb.AppendLine();
 
             sb.AppendLine("<b>Активные запросы:</b>");
-            foreach (var task in userTasks.Where(t => t.Status == EntityFramework.Entities.Tasks.StatusFormats.Created))
+            foreach (var task in userTasks.Where(t => t.Status == EntityFramework.Entities.Tasks.TaskStatusFormats.Created))
             {
-                sb.AppendLine(TasksInfoDialog.FormatTask(task));
+                sb.AppendLine(this.FormatTask(task));
             }
             sb.AppendLine();
 
             sb.AppendLine("<b>Подтверждённые запросы:</b>");
-            foreach (var task in userTasks.Where(t => t.Status == EntityFramework.Entities.Tasks.StatusFormats.Approved))
+            foreach (var task in userTasks.Where(t => t.Status == EntityFramework.Entities.Tasks.TaskStatusFormats.Approved))
             {
-                sb.AppendLine(TasksInfoDialog.FormatTask(task));
+                sb.AppendLine(this.FormatTask(task));
             }
             sb.AppendLine();
 
             sb.AppendLine("<b>Отклонённые запросы:</b>");
-            foreach (var task in userTasks.Where(t => t.Status == EntityFramework.Entities.Tasks.StatusFormats.Declined))
+            foreach (var task in userTasks.Where(t => t.Status == EntityFramework.Entities.Tasks.TaskStatusFormats.Declined))
             {
-                sb.AppendLine(TasksInfoDialog.FormatTask(task));
+                sb.AppendLine(this.FormatTask(task));
             }
             sb.AppendLine();
 
@@ -69,7 +75,7 @@ namespace GreenVerticalBot.Dialogs
                 cancellationToken: cancellationToken,
                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html);
         }
-        private static string FormatTask(BotTask task)
+        private string FormatTask(BotTask task)
         {
             var sb = new StringBuilder();
             sb.AppendLine($"<b>❓ Запрос [{task.Id}]</b>");
@@ -85,7 +91,20 @@ namespace GreenVerticalBot.Dialogs
                     sb.AppendLine($"*    {Enum.Parse<UserRole>(claim.Value).ToDescriptionString()}");
                 }
                 var reason = task.Data.ToRequestClaimTaskData().Reason;
-                sb.AppendLine($"Причина: {reason}");
+                if (!string.IsNullOrWhiteSpace(reason))
+                {
+                    sb.AppendLine($"Причина: {reason}");
+                }
+            }
+
+            if (task.Type == EntityFramework.Entities.Tasks.TaskType.RequestChatAccess)
+            {
+                var requestedChatId = task.Data.ToRequestChatAccessData().ChatId;
+                sb.AppendLine($"Id чата [{requestedChatId}]");
+                if (this.config.ChatInfos.TryGetValue(requestedChatId, out var chatInfo))
+                {
+                    sb.AppendLine($"Имя чата [{chatInfo.FriendlyName}]");
+                }
             }
             return sb.ToString();
         }
