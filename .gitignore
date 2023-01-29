@@ -404,5 +404,5 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 /src/GreenVerticalBot/Configuration/_config.json
-/src/GreenVerticalBot/appsettings.Development.json.json
+/src/GreenVerticalBot/appsettings.Development.json
 /src/GreenVerticalBot/appsettings.json
